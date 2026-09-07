@@ -5,6 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun DynamicInputScreen(navController: NavController) {
