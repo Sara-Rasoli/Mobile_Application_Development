@@ -79,6 +79,11 @@ object TDMValidator {
         val samplingTimeHr = parsePositive(samplingTimeHrText, "Sampling time", MIN_TIME_HR, MAX_TIME_HR, errors, "samplingTimeHr")
         val postLevelConc = parsePositive(postLevelText, "Post-dose level", MIN_LEVEL_CONC, MAX_LEVEL_CONC, errors, "postLevelConc")
 
+        // Cross-field check: sampling time must occur before the next dose is due.
+        if (samplingTimeHr != null && intervalHr != null && samplingTimeHr >= intervalHr) {
+            errors["samplingTimeHr"] = "Sampling time must be less than the dosing interval."
+        }
+
         val input = if (errors.isEmpty() && doseMg != null && intervalHr != null &&
             infusionDurationHr != null && samplingTimeHr != null && postLevelConc != null
         ) {
@@ -111,6 +116,15 @@ object TDMValidator {
         val preToPostGapHr = parsePositive(preToPostGapHrText, "Pre-to-post gap", MIN_TIME_HR, MAX_TIME_HR, errors, "preToPostGapHr")
         val preLevelConc = parsePositive(preLevelText, "Pre-dose level", MIN_LEVEL_CONC, MAX_LEVEL_CONC, errors, "preLevelConc")
         val postLevelConc = parsePositive(postLevelText, "Post-dose level", MIN_LEVEL_CONC, MAX_LEVEL_CONC, errors, "postLevelConc")
+
+        // Cross-field check: the two sample times must fit inside a single dosing interval.
+        if (preToPostGapHr != null && intervalHr != null && preToPostGapHr >= intervalHr) {
+            errors["preToPostGapHr"] = "Pre-to-post gap must be less than the dosing interval."
+        }
+        // Cross-field check: a post-dose (peak) level should be higher than the pre-dose (trough) level.
+        if (preLevelConc != null && postLevelConc != null && postLevelConc <= preLevelConc) {
+            errors["postLevelConc"] = "Post-dose level should normally be higher than pre-dose level."
+        }
 
         val input = if (errors.isEmpty() && doseMg != null && intervalHr != null &&
             infusionDurationHr != null && infusionToPostGapHr != null &&
