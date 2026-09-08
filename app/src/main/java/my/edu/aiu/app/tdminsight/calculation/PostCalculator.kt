@@ -18,10 +18,8 @@ class PostCalculator {
 
         steps.add(
             CalculationStep(
-                title = "Patient-Specific Ke (From Measured Levels)",
-                formula = "Ke = [ln(Peak) - ln(Trough)] / Δt",
-                substitution = "Ke = [ln($peak) - ln($trough)] / $deltaT",
-                result = "${String.format("%.4f", ke)} h⁻¹"
+                title = "Patient-Specific Ke (Measured Levels)",
+                value = "${String.format("%.4f", ke)} h⁻¹"
             )
         )
 

@@ -9,13 +9,12 @@ class PrePostCalculator {
         val postResult = postCalculator.calculate(input)
         val steps = postResult.calculationSteps.toMutableList()
 
+        val newDose = input.doseMg * (500.0 / (if (postResult.auc24MgHourPerL > 0) postResult.auc24MgHourPerL else 1.0))
+
         steps.add(
             CalculationStep(
-                title = "Dosage Re-evaluation (Pre + Post Synthesis)",
-                formula = "New Dose = Current Dose * (Target AUC / Measured AUC)",
-                substitution = "New Dose = ${input.doseMg} * (500.0 / ${String.format("%.2f", postResult.auc24MgHourPerL)})",
-                result = "${String.format("%.0f", input.doseMg * (500.0 / (if (postResult.auc24MgHourPerL > 0) postResult.auc24MgHourPerL else 1.0)))} mg",
-                clinicalNote = "Target AUC set to median 500 mg·h/L"
+                title = "Recommended Adjusted Dose (Target AUC 500)",
+                value = "${String.format("%.0f", newDose)} mg"
             )
         )
 
