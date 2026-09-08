@@ -6,8 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import my.edu.aiu.app.tdminsight.ui.components.AppHeader
+import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.SectionCard
+import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
+
+private val TDM_STEPS = listOf("Home", "Patient", "Workflow", "Inputs", "Review", "Results", "Explanation")
 
 @Composable
 fun ReviewScreen(navController: NavController) {
@@ -15,13 +21,16 @@ fun ReviewScreen(navController: NavController) {
     val patientInfo = caseViewModel.patientInfo
     val workflow = caseViewModel.selectedWorkflow
 
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-        Text("Review Your Inputs", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+    Column(modifier = Modifier.fillMaxSize()) {
+        AppHeader()
+        Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+            StepProgressBar(TDM_STEPS, currentStepIndex = 4)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Review Your Inputs", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (patientInfo != null && workflow != null) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
+            if (patientInfo != null && workflow != null) {
+                SectionCard {
                     Text("Case ID: ${patientInfo.caseId}")
                     Text("Age: ${patientInfo.ageYears}")
                     Text("Weight: ${patientInfo.weightKg} kg")
@@ -30,13 +39,13 @@ fun ReviewScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Workflow: ${workflow.name.replace('_', '+')}")
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                PrimaryAppButton(text = "Run Calculation", modifier = Modifier.fillMaxWidth()) {
+                    navController.navigate(AppRoutes.RESULTS)
+                }
+            } else {
+                Text("Missing data — please go back and complete previous steps.")
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { navController.navigate(AppRoutes.RESULTS) }) {
-                Text("Run Calculation")
-            }
-        } else {
-            Text("Missing data — please go back and complete previous steps.")
         }
     }
 }
