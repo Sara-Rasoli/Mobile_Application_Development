@@ -1,89 +1,38 @@
 package my.edu.aiu.app.tdminsight.calculation
 
-import my.edu.aiu.app.tdminsight.model.*
-import kotlin.math.exp
+import my.edu.aiu.app.tdminsight.model.CalculationStep
+import my.edu.aiu.app.tdminsight.model.TDMInput
+import my.edu.aiu.app.tdminsight.model.TDMResult
 import kotlin.math.ln
 
 class PreCalculator {
-    fun calculate(input: TDMInput): TDMResult {
+    fun calculate(input: TDMInput.Pre): TDMResult {
         val steps = mutableListOf<CalculationStep>()
-        val info = input.patientInfo
 
-        // 1. Creatinine Clearance via Cockcroft-Gault
-        val rawCrCl = ((140.0 - info.age) * info.weightKg) / (72.0 * info.serumCreatinineMgDl)
-        val crCl = if (info.isFemale) rawCrCl * 0.85 else rawCrCl
+        val dose = input.doseMg
+        val interval = input.intervalHr
+        val tInf = input.infusionDurationHr
+        val trough = input.preLevelConc
 
-        steps.add(
-            CalculationStep(
-                title = "Creatinine Clearance (Cockcroft-Gault)",
-                value = "${String.format("%.2f", crCl)} mL/min"
-            )
-        )
+        // Calculate Ke and Vd based on pre-dose/trough level
+        val ke = if (interval > 0 && trough > 0) {
+            ln(dose / (trough * tInf)) / interval
+        } else {
+            0.0
+        }
 
-        // 2. Population Ke estimation
-        val ke = 0.00083 * crCl + 0.0044
-        steps.add(
-            CalculationStep(
-                title = "Elimination Rate Constant (Ke)",
-                value = "${String.format("%.4f", ke)} h⁻¹"
-            )
-        )
-
-        // 3. Half-life
-        val halfLife = ln(2.0) / ke
-        steps.add(
-            CalculationStep(
-                title = "Elimination Half-Life (t1/2)",
-                value = "${String.format("%.2f", halfLife)} hours"
-            )
-        )
-
-        // 4. Volume of Distribution
-        val vd = 0.7 * info.weightKg
-        steps.add(
-            CalculationStep(
-                title = "Volume of Distribution (Vd)",
-                value = "${String.format("%.2f", vd)} L"
-            )
-        )
-
-        // 5. Clearance
+        val halfLife = if (ke > 0) ln(2.0) / ke else 0.0
+        val vd = if (ke > 0 && trough > 0) dose / trough else 0.0
         val clearance = ke * vd
-        steps.add(
-            CalculationStep(
-                title = "Clearance (CL)",
-                value = "${String.format("%.2f", clearance)} L/h"
-            )
-        )
-
-        // 6. AUC24
-        val dailyDose = input.doseMg * (24.0 / input.dosingIntervalHours)
-        val auc24 = dailyDose / clearance
-        steps.add(
-            CalculationStep(
-                title = "24-Hour Area Under Curve (AUC24)",
-                value = "${String.format("%.2f", auc24)} mg·h/L"
-            )
-        )
-
-        // 7. Peak & Trough Concentrations
-        val tInf = input.infusionDurationHours
-        val tau = input.dosingIntervalHours
-        val peak = (input.doseMg / vd) * ((1.0 - exp(-ke * tInf)) / (1.0 - exp(-ke * tau)))
-        val trough = peak * exp(-ke * (tau - tInf))
 
         return TDMResult(
-            workflow = TDMWorkflow.PRE,
-            patientInfo = info,
-            estimatedCrClMlMin = crCl,
             ke = ke,
-            halfLifeHours = halfLife,
-            vdLiters = vd,
-            clearanceLitersPerHour = clearance,
-            auc24MgHourPerL = auc24,
-            estimatedPeakMgL = peak,
-            estimatedTroughMgL = trough,
-            calculationSteps = steps
+            halfLifeHr = halfLife,
+            vd = vd,
+            clearance = clearance,
+            auc24 = null,
+            expectedCmax = null,
+            expectedCmin = trough
         )
     }
 }

@@ -14,9 +14,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val calculationEngine = remember { TDMCalculationEngine() }
 
-    // Holds current TDM calculation input state across screens
-    var currentInput by remember { mutableStateOf(TDMInput()) }
-    // Holds the latest calculated result
+    var currentInput by remember { mutableStateOf<TDMInput?>(null) }
     var currentResult by remember { mutableStateOf<TDMResult?>(null) }
 
     NavHost(
@@ -31,10 +29,6 @@ fun AppNavigation() {
             PatientInformationScreen(navController = navController)
         }
 
-        composable(AppRoutes.WORKFLOW_SELECTION) {
-            WorkflowSelectionScreen(navController = navController)
-        }
-
         composable(AppRoutes.DYNAMIC_INPUT) {
             DynamicInputScreen(navController = navController)
         }
@@ -44,29 +38,28 @@ fun AppNavigation() {
         }
 
         composable(AppRoutes.RESULTS) {
-            // Renders Member 3 calculation output if available
             currentResult?.let { result ->
                 ResultsScreen(
                     result = result,
                     onNavigateToExplanation = {
-                        navController.navigate(AppRoutes.EXPLANATION)
+                        navController.navigate(AppRoutes.CALCULATION_EXPLANATION)
                     },
                     onNavigateHome = {
-                        currentInput = TDMInput()
-                        currentResult = null
                         navController.popBackStack(AppRoutes.HOME, inclusive = false)
                     }
                 )
-            } ?: ResultsScreen(navController = navController) // Fallback to basic view if result isn't calculated yet
+            }
         }
 
-        composable(AppRoutes.EXPLANATION) {
+        composable(AppRoutes.CALCULATION_EXPLANATION) {
             currentResult?.let { result ->
                 CalculationExplanationScreen(
                     result = result,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
                 )
-            } ?: CalculationExplanationScreen(navController = navController)
+            }
         }
     }
 }

@@ -1,45 +1,38 @@
 package my.edu.aiu.app.tdminsight.calculation
 
-import my.edu.aiu.app.tdminsight.model.*
+import my.edu.aiu.app.tdminsight.model.CalculationStep
+import my.edu.aiu.app.tdminsight.model.TDMInput
+import my.edu.aiu.app.tdminsight.model.TDMResult
 import kotlin.math.ln
 
 class PostCalculator {
-    fun calculate(input: TDMInput): TDMResult {
+    fun calculate(input: TDMInput.Post): TDMResult {
         val steps = mutableListOf<CalculationStep>()
-        val info = input.patientInfo
 
-        val peak = input.postConcentrationMgL ?: 0.0
-        val trough = input.preConcentrationMgL ?: 0.0
-        val deltaT = input.dosingIntervalHours - input.infusionDurationHours
+        val peak = input.postLevelConc
+        val dose = input.doseMg
+        val tInf = input.infusionDurationHr
+        val tSample = input.samplingTimeHr
 
-        val ke = if (peak > 0 && trough > 0 && deltaT > 0) {
-            (ln(peak) - ln(trough)) / deltaT
-        } else 0.0
-
-        steps.add(
-            CalculationStep(
-                title = "Patient-Specific Ke (Measured Levels)",
-                value = "${String.format("%.4f", ke)} h⁻¹"
-            )
-        )
+        // Estimate Ke and Vd based on post-dose level and infusion timing
+        val ke = if (tSample > 0 && peak > 0) {
+            ln(dose / (peak * tInf)) / tSample
+        } else {
+            0.0
+        }
 
         val halfLife = if (ke > 0) ln(2.0) / ke else 0.0
-        val vd = 0.7 * info.weightKg
+        val vd = if (ke > 0 && peak > 0) dose / peak else 0.0
         val clearance = ke * vd
-        val dailyDose = input.doseMg * (24.0 / input.dosingIntervalHours)
-        val auc24 = if (clearance > 0) dailyDose / clearance else 0.0
 
         return TDMResult(
-            workflow = TDMWorkflow.POST,
-            patientInfo = info,
             ke = ke,
-            halfLifeHours = halfLife,
-            vdLiters = vd,
-            clearanceLitersPerHour = clearance,
-            auc24MgHourPerL = auc24,
-            estimatedPeakMgL = peak,
-            estimatedTroughMgL = trough,
-            calculationSteps = steps
+            halfLifeHr = halfLife,
+            vd = vd,
+            clearance = clearance,
+            auc24 = null,
+            expectedCmax = peak,
+            expectedCmin = null
         )
     }
 }

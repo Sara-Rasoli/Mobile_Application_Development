@@ -2,7 +2,6 @@ package my.edu.aiu.app.tdminsight.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -10,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import my.edu.aiu.app.tdminsight.model.CalculationStep
 import my.edu.aiu.app.tdminsight.model.TDMResult
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,23 +41,29 @@ fun CalculationExplanationScreen(
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
             item {
-                Text(
-                    text = "Workflow: ${result.workflow.name}",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Spacer(modifier = Modifier.height(4.dp))
+                ResultDetailCard(title = "Elimination Rate Constant (Ke)", value = "%.4f /hr".format(result.ke))
             }
-
-            items(result.calculationSteps) { step ->
-                CalculationStepCard(step = step)
+            item {
+                ResultDetailCard(title = "Half-Life (t 1/2)", value = "%.2f hr".format(result.halfLifeHr))
+            }
+            item {
+                ResultDetailCard(title = "Volume of Distribution (Vd)", value = "%.2f L".format(result.vd))
+            }
+            item {
+                ResultDetailCard(title = "Clearance (Cl)", value = "%.2f L/hr".format(result.clearance))
+            }
+            result.expectedCmax?.let { cmax ->
+                item { ResultDetailCard(title = "Expected Peak (Cmax)", value = "%.2f mg/L".format(cmax)) }
+            }
+            result.expectedCmin?.let { cmin ->
+                item { ResultDetailCard(title = "Expected Trough (Cmin)", value = "%.2f mg/L".format(cmin)) }
             }
         }
     }
 }
 
 @Composable
-private fun CalculationStepCard(step: CalculationStep) {
+private fun ResultDetailCard(title: String, value: String) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -69,7 +73,7 @@ private fun CalculationStepCard(step: CalculationStep) {
                 .fillMaxWidth()
         ) {
             Text(
-                text = step.title,
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -78,7 +82,7 @@ private fun CalculationStepCard(step: CalculationStep) {
             HorizontalDivider()
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = step.value,
+                text = value,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )

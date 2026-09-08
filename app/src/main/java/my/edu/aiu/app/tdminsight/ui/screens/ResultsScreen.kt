@@ -22,7 +22,7 @@ fun ResultsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("TDM Results — ${result.workflow.name}") }
+                title = { Text("TDM Results") }
             )
         }
     ) { paddingValues ->
@@ -32,90 +32,37 @@ fun ResultsScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Summary Banner
             Card(
+                modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                modifier = Modifier.fillMaxWidth()
+                )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "24-Hour AUC Target Status",
+                        text = "Pharmacokinetic Parameters",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${String.format("%.1f", result.auc24MgHourPerL)} mg·h/L",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = "Target therapeutic window: 400–600 mg·h/L",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Elimination Rate (Ke): %.4f /hr".format(result.ke))
+                    Text("Half-Life (t½): %.2f hr".format(result.halfLifeHr))
+                    Text("Volume of Distribution (Vd): %.2f L".format(result.vd))
+                    Text("Clearance (Cl): %.2f L/hr".format(result.clearance))
+
+                    result.expectedCmax?.let { Text("Expected Peak (Cmax): %.2f mg/L".format(it)) }
+                    result.expectedCmin?.let { Text("Expected Trough (Cmin): %.2f mg/L".format(it)) }
                 }
             }
 
-            Text(
-                text = "Pharmacokinetic Parameters",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            // PK Parameter Cards Grid
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ParameterCard(
-                    title = "Clearance (CL)",
-                    value = "${String.format("%.2f", result.clearanceLitersPerHour)} L/h",
-                    modifier = Modifier.weight(1f)
-                )
-                ParameterCard(
-                    title = "Half-Life (t½)",
-                    value = "${String.format("%.2f", result.halfLifeHours)} h",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ParameterCard(
-                    title = "Est. Peak Concentration",
-                    value = result.estimatedPeakMgL?.let { "${String.format("%.1f", it)} mg/L" } ?: "N/A",
-                    modifier = Modifier.weight(1f)
-                )
-                ParameterCard(
-                    title = "Est. Trough Concentration",
-                    value = result.estimatedTroughMgL?.let { "${String.format("%.1f", it)} mg/L" } ?: "N/A",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            result.estimatedCrClMlMin?.let { crCl ->
-                ParameterCard(
-                    title = "Creatinine Clearance (CrCl)",
-                    value = "${String.format("%.1f", crCl)} mL/min",
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Action Buttons
             Button(
                 onClick = onNavigateToExplanation,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("View Step-by-Step Explanation")
+                Text("View Calculation Breakdown")
             }
 
             OutlinedButton(
@@ -124,36 +71,6 @@ fun ResultsScreen(
             ) {
                 Text("Return to Home")
             }
-        }
-    }
-}
-
-@Composable
-private fun ParameterCard(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
         }
     }
 }

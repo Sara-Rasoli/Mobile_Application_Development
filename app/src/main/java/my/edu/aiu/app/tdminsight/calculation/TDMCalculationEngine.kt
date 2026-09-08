@@ -1,6 +1,7 @@
 package my.edu.aiu.app.tdminsight.calculation
 
-import my.edu.aiu.app.tdminsight.model.*
+import my.edu.aiu.app.tdminsight.model.TDMInput
+import my.edu.aiu.app.tdminsight.model.TDMResult
 
 class TDMCalculationEngine {
     private val preCalculator = PreCalculator()
@@ -8,10 +9,10 @@ class TDMCalculationEngine {
     private val prePostCalculator = PrePostCalculator()
 
     fun calculate(input: TDMInput): TDMResult {
-        return when (input.workflow) {
-            TDMWorkflow.PRE -> preCalculator.calculate(input)
-            TDMWorkflow.POST -> postCalculator.calculate(input)
-            TDMWorkflow.PRE_POST -> prePostCalculator.calculate(input)
+        return when (input) {
+            is TDMInput.Pre -> preCalculator.calculate(input)
+            is TDMInput.Post -> postCalculator.calculate(input)
+            is TDMInput.PrePost -> prePostCalculator.calculate(input)
         }
     }
 }
