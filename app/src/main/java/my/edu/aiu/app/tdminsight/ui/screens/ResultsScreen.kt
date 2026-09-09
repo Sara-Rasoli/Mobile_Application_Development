@@ -18,7 +18,7 @@ fun ResultsScreen(navController: NavController) {
     LaunchedEffect(input) {
         if (input != null && caseViewModel.tdmResult == null) {
             val result = TDMCalculationEngine().calculate(input)
-            caseViewModel.setTdmResult(result)
+            caseViewModel.updateTdmResult(result)
         }
     }
 

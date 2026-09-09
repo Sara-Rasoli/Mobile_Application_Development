@@ -110,7 +110,7 @@ fun PatientInformationScreen(navController: NavController) {
                         creatinine == null -> errorMessage = "Serum creatinine must be a number."
                         else -> {
                             errorMessage = null
-                            caseViewModel.setPatientInfo(
+                            caseViewModel.updatePatientInfo(
                                 PatientInfo(
                                     caseId = caseId.trim(),
                                     weightKg = weight,
