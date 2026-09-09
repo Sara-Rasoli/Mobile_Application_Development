@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import my.edu.aiu.app.tdminsight.model.Gender
 import my.edu.aiu.app.tdminsight.model.PatientInfo
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
@@ -27,7 +28,10 @@ fun PatientInformationScreen(navController: NavController) {
     val caseViewModel = rememberSharedCaseViewModel(navController)
 
     var caseId by remember { mutableStateOf("") }
+    var patientName by remember { mutableStateOf("") }
+    var selectedGender by remember { mutableStateOf<Gender?>(null) }
     var ageText by remember { mutableStateOf("") }
+    var heightText by remember { mutableStateOf("") }
     var weightText by remember { mutableStateOf("") }
     var creatinineText by remember { mutableStateOf("") }
     var isPaediatric by remember { mutableStateOf(false) }
@@ -62,10 +66,47 @@ fun PatientInformationScreen(navController: NavController) {
                 Text("Patient Information", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(
+                    value = patientName,
+                    onValueChange = { patientName = it },
+                    label = { Text("Patient Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text("Gender", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Gender.entries.forEach { genderOption ->
+                        FilterChip(
+                            selected = selectedGender == genderOption,
+                            onClick = { selectedGender = genderOption },
+                            label = {
+                                Text(
+                                    genderOption.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() }
+                                )
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
                     value = ageText,
                     onValueChange = { ageText = it },
                     label = { Text("Age (years)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = heightText,
+                    onValueChange = { heightText = it },
+                    label = { Text("Height (cm)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -101,11 +142,15 @@ fun PatientInformationScreen(navController: NavController) {
                 SecondaryAppButton(text = "Back", modifier = Modifier.weight(1f)) { navController.popBackStack() }
                 PrimaryAppButton(text = "Continue", modifier = Modifier.weight(1f)) {
                     val age = ageText.toIntOrNull()
+                    val height = heightText.toDoubleOrNull()
                     val weight = weightText.toDoubleOrNull()
                     val creatinine = creatinineText.toDoubleOrNull()
                     when {
                         caseId.isBlank() -> errorMessage = "Case ID is required."
+                        patientName.isBlank() -> errorMessage = "Patient name is required."
+                        selectedGender == null -> errorMessage = "Please select a gender."
                         age == null -> errorMessage = "Age must be a whole number."
+                        height == null -> errorMessage = "Height must be a number."
                         weight == null -> errorMessage = "Weight must be a number."
                         creatinine == null -> errorMessage = "Serum creatinine must be a number."
                         else -> {
@@ -113,6 +158,9 @@ fun PatientInformationScreen(navController: NavController) {
                             caseViewModel.updatePatientInfo(
                                 PatientInfo(
                                     caseId = caseId.trim(),
+                                    name = patientName.trim(),
+                                    gender = selectedGender!!,
+                                    heightCm = height,
                                     weightKg = weight,
                                     ageYears = age,
                                     serumCreatinine = creatinine,
