@@ -19,6 +19,9 @@ class CaseViewModel : ViewModel() {
     var tdmInput: TDMInput? = null
         private set
 
+    var tdmResult: my.edu.aiu.app.tdminsight.model.TDMResult? = null
+        private set
+
     fun setPatientInfo(info: PatientInfo) { patientInfo = info }
     fun setWorkflow(workflow: TDMWorkflow) { selectedWorkflow = workflow }
     fun setTDMInput(input: TDMInput) { tdmInput = input }
@@ -26,6 +29,10 @@ class CaseViewModel : ViewModel() {
         patientInfo = null
         selectedWorkflow = null
         tdmInput = null
+        tdmResult = null
+    }
+    fun setTdmResult(result: my.edu.aiu.app.tdminsight.model.TDMResult) {
+        tdmResult = result
     }
 }
 

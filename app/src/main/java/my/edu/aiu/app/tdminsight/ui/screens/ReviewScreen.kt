@@ -38,6 +38,7 @@ fun ReviewScreen(navController: NavController) {
                     Text("Paediatric: ${if (patientInfo.isPaediatric) "Yes" else "No"}")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Workflow: ${workflow.name.replace('_', '+')}")
+                    Text("DEBUG tdmInput: ${caseViewModel.tdmInput}")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 PrimaryAppButton(text = "Run Calculation", modifier = Modifier.fillMaxWidth()) {
