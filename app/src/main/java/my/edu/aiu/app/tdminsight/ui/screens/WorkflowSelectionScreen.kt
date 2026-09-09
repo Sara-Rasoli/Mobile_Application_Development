@@ -8,7 +8,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.model.TDMWorkflow
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
-import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
@@ -24,8 +23,14 @@ fun WorkflowSelectionScreen(navController: NavController) {
         AppHeader()
         Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 2)
-            Spacer(modifier = Modifier.height(12.dp))
-            Text("Select TDM Method", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Select TDM Workflow", style = MaterialTheme.typography.headlineSmall)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                "Choose the Vancomycin sampling workflow for this case.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
             Spacer(modifier = Modifier.height(16.dp))
 
             WorkflowOption("Vancomycin Pre", "Pre-dose (trough-based) workflow.") {
