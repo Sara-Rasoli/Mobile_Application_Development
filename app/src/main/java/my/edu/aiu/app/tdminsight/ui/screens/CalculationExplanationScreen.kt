@@ -20,6 +20,8 @@ import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
 import my.edu.aiu.app.tdminsight.ui.theme.TextSecondary
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 
 private val TDM_STEPS = listOf(
     "Home",
@@ -37,6 +39,10 @@ fun CalculationExplanationScreen(navController: NavController) {
     val caseViewModel = rememberSharedCaseViewModel(navController)
 
     val steps = caseViewModel.tdmResult?.steps ?: emptyList()
+    val context = LocalContext.current
+    val patientInfo = caseViewModel.patientInfo
+    val workflow = caseViewModel.selectedWorkflow
+    val result = caseViewModel.tdmResult
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -127,6 +133,37 @@ fun CalculationExplanationScreen(navController: NavController) {
                         color = TextSecondary
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+// Share Summary button
+            SecondaryAppButton(
+                text = "Share Summary",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val summary = buildString {
+                    appendLine("TDM Insight — Calculation Summary")
+                    appendLine("(Academic prototype — fictional case only)")
+                    appendLine()
+                    patientInfo?.let {
+                        appendLine("Case ID: ${it.caseId}")
+                        appendLine("Patient: ${it.name}, ${it.ageYears}y, ${it.weightKg}kg")
+                    }
+                    workflow?.let { appendLine("Workflow: ${it.name.replace('_', '+')}") }
+                    result?.let {
+                        appendLine()
+                        appendLine("Ke: %.4f /hr".format(it.ke))
+                        appendLine("Half-life: %.2f hr".format(it.halfLifeHr))
+                        appendLine("Vd: %.2f L".format(it.vd))
+                        it.clearance?.let { c -> appendLine("Clearance: %.2f L/hr".format(c)) }
+                    }
+                }
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, summary)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share calculation summary"))
             }
 
             Spacer(modifier = Modifier.height(14.dp))

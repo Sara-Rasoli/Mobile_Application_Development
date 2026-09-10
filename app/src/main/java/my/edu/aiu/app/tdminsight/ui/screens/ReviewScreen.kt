@@ -16,7 +16,7 @@ import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
 import my.edu.aiu.app.tdminsight.ui.theme.TextSecondary
-
+import androidx.compose.foundation.verticalScroll
 private val TDM_STEPS = listOf("Home", "Patient", "Workflow", "Inputs", "Review", "Results", "Explanation")
 
 @Composable
@@ -38,7 +38,7 @@ fun ReviewScreen(navController: NavController) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         AppHeader(navController)
-        Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp)) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 4)
             Spacer(modifier = Modifier.height(8.dp))
             ScreenTitleRow(icon = Icons.Filled.FactCheck, title = "Review Calculation")
