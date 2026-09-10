@@ -1,6 +1,8 @@
 package my.edu.aiu.app.tdminsight.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,6 +11,7 @@ import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.calculation.TDMCalculationEngine
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
 import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
@@ -42,11 +45,11 @@ fun ResultsScreen(navController: NavController) {
     val result = caseViewModel.tdmResult
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppHeader()
+        AppHeader(navController)
         Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 5)
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Results", style = MaterialTheme.typography.headlineSmall)
+            ScreenTitleRow(icon = Icons.Filled.BarChart, title = "Results")
             Spacer(modifier = Modifier.height(16.dp))
 
             if (result != null) {

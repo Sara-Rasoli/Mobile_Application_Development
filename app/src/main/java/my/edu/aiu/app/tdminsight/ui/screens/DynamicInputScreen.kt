@@ -1,6 +1,8 @@
 package my.edu.aiu.app.tdminsight.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,6 +14,7 @@ import my.edu.aiu.app.tdminsight.ui.components.PostInputForm
 import my.edu.aiu.app.tdminsight.ui.components.PreInputForm
 import my.edu.aiu.app.tdminsight.ui.components.PrePostInputForm
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
 import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
@@ -38,11 +41,11 @@ fun DynamicInputScreen(navController: NavController) {
     var errors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppHeader()
+        AppHeader(navController)
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp)) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 3)
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Enter Values (${workflow.name})", style = MaterialTheme.typography.headlineSmall)
+            ScreenTitleRow(icon = Icons.Filled.Edit, title = "Enter Values (${workflow.name})")
             Spacer(modifier = Modifier.height(16.dp))
 
             when (workflow) {

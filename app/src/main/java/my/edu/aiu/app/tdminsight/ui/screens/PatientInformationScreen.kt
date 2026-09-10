@@ -6,6 +6,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,9 +21,11 @@ import my.edu.aiu.app.tdminsight.model.PatientInfo
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.LabeledInputField
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
 import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
+import my.edu.aiu.app.tdminsight.ui.components.WarningBanner
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
 import my.edu.aiu.app.tdminsight.ui.theme.BorderLight
@@ -50,7 +55,7 @@ fun PatientInformationScreen(navController: NavController) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppHeader()
+        AppHeader(navController)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -59,17 +64,28 @@ fun PatientInformationScreen(navController: NavController) {
         ) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 1)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Patient Information", style = MaterialTheme.typography.headlineSmall)
+            ScreenTitleRow(icon = Icons.Filled.Person, title = "Patient Information")
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 "Enter the patient parameters required for the calculation.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            WarningBanner(text = "Use fictional information only. Do not enter real patient information.")
             Spacer(modifier = Modifier.height(16.dp))
 
             SectionCard {
-                Text("Case", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Science,
+                        contentDescription = null,
+                        tint = TealPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Case", style = MaterialTheme.typography.titleMedium)
+                }
                 Spacer(modifier = Modifier.height(12.dp))
                 LabeledInputField(
                     label = "Case ID",
@@ -82,7 +98,16 @@ fun PatientInformationScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
-                Text("Patient Information", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Person,
+                        contentDescription = null,
+                        tint = TealPrimary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Patient Information", style = MaterialTheme.typography.titleMedium)
+                }
                 Spacer(modifier = Modifier.height(12.dp))
                 LabeledInputField(
                     label = "Patient Name",
@@ -101,10 +126,7 @@ fun PatientInformationScreen(navController: NavController) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp)
-                            .selectable(selected = isSelected, onClick = { selectedGender = genderOption })
-                            .then(
-                                Modifier
-                            ),
+                            .selectable(selected = isSelected, onClick = { selectedGender = genderOption }),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Surface(

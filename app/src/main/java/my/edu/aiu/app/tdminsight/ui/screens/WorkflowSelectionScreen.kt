@@ -1,6 +1,8 @@
 package my.edu.aiu.app.tdminsight.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,6 +10,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.model.TDMWorkflow
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
+import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
@@ -20,11 +24,11 @@ fun WorkflowSelectionScreen(navController: NavController) {
     val caseViewModel = rememberSharedCaseViewModel(navController)
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppHeader()
+        AppHeader(navController)
         Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 2)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Select TDM Workflow", style = MaterialTheme.typography.headlineSmall)
+            ScreenTitleRow(icon = Icons.Filled.Tune, title = "Select TDM Workflow")
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 "Choose the Vancomycin sampling workflow for this case.",
@@ -49,7 +53,9 @@ fun WorkflowSelectionScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            TextButton(onClick = { navController.popBackStack() }) { Text("Back") }
+            SecondaryAppButton(text = "Back", modifier = Modifier.fillMaxWidth()) {
+                navController.popBackStack()
+            }
         }
     }
 }

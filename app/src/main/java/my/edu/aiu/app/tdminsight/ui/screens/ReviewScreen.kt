@@ -1,6 +1,8 @@
 package my.edu.aiu.app.tdminsight.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
 import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
@@ -34,11 +37,11 @@ fun ReviewScreen(navController: NavController) {
     val workflow = caseViewModel.selectedWorkflow
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppHeader()
+        AppHeader(navController)
         Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 4)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Review Calculation", style = MaterialTheme.typography.headlineSmall)
+            ScreenTitleRow(icon = Icons.Filled.FactCheck, title = "Review Calculation")
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 "Please review all inputs before calculating.",
