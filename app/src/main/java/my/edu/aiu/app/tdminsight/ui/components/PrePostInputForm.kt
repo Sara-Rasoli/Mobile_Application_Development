@@ -30,61 +30,108 @@ fun PrePostInputForm(
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(12.dp))
+
             LabeledInputField(
-                label = "Dose", value = doseMg, onValueChange = onDoseMgChange,
-                unit = "mg", helperText = "Vancomycin dose administered.",
+                label = "Dose",
+                value = doseMg,
+                onValueChange = onDoseMgChange,
+                unit = "mg",
+                helperText = "Vancomycin dose administered.",
                 keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("doseMg"), errorText = errors["doseMg"]
+                isError = errors.containsKey("doseMg"),
+                errorText = errors["doseMg"]
             )
         }
+
         Spacer(modifier = Modifier.height(10.dp))
+
         SectionCard {
             Text("Dosing Schedule", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(12.dp))
+
             LabeledInputField(
-                label = "Dosing Interval", value = intervalHr, onValueChange = onIntervalHrChange,
-                unit = "h", helperText = "Time between consecutive doses.",
+                label = "Dosing Interval",
+                value = intervalHr,
+                onValueChange = onIntervalHrChange,
+                unit = "h",
+                helperText = "Time between consecutive doses.",
                 keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("intervalHr"), errorText = errors["intervalHr"]
+                isError = errors.containsKey("intervalHr"),
+                errorText = errors["intervalHr"]
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             LabeledInputField(
-                label = "Infusion Duration", value = infusionDurationHr, onValueChange = onInfusionDurationHrChange,
-                unit = "h", helperText = "How long the infusion runs for.",
+                label = "Infusion Duration",
+                value = infusionDurationHr,
+                onValueChange = onInfusionDurationHrChange,
+                unit = "h",
+                helperText = "How long the infusion runs for.",
                 keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("infusionDurationHr"), errorText = errors["infusionDurationHr"]
+                isError = errors.containsKey("infusionDurationHr"),
+                errorText = errors["infusionDurationHr"]
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             LabeledInputField(
-                label = "Infusion End to Post-level Gap", value = infusionToPostGapHr, onValueChange = onInfusionToPostGapHrChange,
-                unit = "h", helperText = "Time between infusion end and the post-level draw.",
+                label = "Infusion End to Post-level Gap",
+                value = infusionToPostGapHr,
+                onValueChange = onInfusionToPostGapHrChange,
+                unit = "h",
+                helperText = "Time between infusion end and the post-level draw.",
                 keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("infusionToPostGapHr"), errorText = errors["infusionToPostGapHr"]
+                isError = errors.containsKey("infusionToPostGapHr"),
+                errorText = errors["infusionToPostGapHr"]
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
             LabeledInputField(
-                label = "Pre-level to Post-level Gap", value = preToPostGapHr, onValueChange = onPreToPostGapHrChange,
-                unit = "h", helperText = "Time between the pre-level and post-level draws.",
+                label = "Pre-level to Post-level Gap",
+                value = preToPostGapHr,
+                onValueChange = onPreToPostGapHrChange,
+                unit = "h",
+                helperText = "Time between the pre-level and post-level draws.",
                 keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("preToPostGapHr"), errorText = errors["preToPostGapHr"]
+                isError = errors.containsKey("preToPostGapHr"),
+                errorText = errors["preToPostGapHr"]
             )
         }
+
         Spacer(modifier = Modifier.height(10.dp))
+
         SectionCard {
-            Text("Concentration Information", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(12.dp))
-            LabeledInputField(
-                label = "Pre-dose (Trough) Concentration", value = preLevelConc, onValueChange = onPreLevelConcChange,
-                unit = "mg/L", helperText = "Measured concentration immediately before the next dose.",
-                keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("preLevelConc"), errorText = errors["preLevelConc"]
+            Text(
+                "Concentration Information",
+                style = MaterialTheme.typography.titleMedium
             )
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             LabeledInputField(
-                label = "Post-dose (Peak) Concentration", value = postLevelConc, onValueChange = onPostLevelConcChange,
-                unit = "mg/L", helperText = "Measured concentration after dose administration.",
+                label = "Pre-dose (Trough) Concentration",
+                value = preLevelConc,
+                onValueChange = onPreLevelConcChange,
+                unit = "mg/L",
+                helperText = "Measured concentration immediately before the next dose.",
                 keyboardType = KeyboardType.Decimal,
-                isError = errors.containsKey("postLevelConc"), errorText = errors["postLevelConc"]
+                isError = errors.containsKey("preLevelConc"),
+                errorText = errors["preLevelConc"]
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LabeledInputField(
+                label = "Post-dose (Peak) Concentration",
+                value = postLevelConc,
+                onValueChange = onPostLevelConcChange,
+                unit = "mg/L",
+                helperText = "Measured concentration after dose administration.",
+                keyboardType = KeyboardType.Decimal,
+                isError = errors.containsKey("postLevelConc"),
+                errorText = errors["postLevelConc"]
             )
         }
     }

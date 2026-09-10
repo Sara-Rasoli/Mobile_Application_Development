@@ -18,7 +18,10 @@ import my.edu.aiu.app.tdminsight.ui.screens.WorkflowSelectionScreen
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
-    NavHost(navController = navController, startDestination = AppRoutes.HOME) {
+    NavHost(
+        navController = navController,
+        startDestination = AppRoutes.HOME
+    ) {
 
         composable(AppRoutes.HOME) {
             HomeScreen(navController)

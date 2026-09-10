@@ -14,6 +14,7 @@ import my.edu.aiu.app.tdminsight.model.TDMResult
 import my.edu.aiu.app.tdminsight.model.TDMWorkflow
 
 class CaseViewModel : ViewModel() {
+
     var patientInfo: PatientInfo? by mutableStateOf<PatientInfo?>(null)
         private set
 
@@ -26,10 +27,21 @@ class CaseViewModel : ViewModel() {
     var tdmResult: TDMResult? by mutableStateOf<TDMResult?>(null)
         private set
 
-    fun updatePatientInfo(info: PatientInfo) { patientInfo = info }
-    fun setWorkflow(workflow: TDMWorkflow) { selectedWorkflow = workflow }
-    fun setTDMInput(input: TDMInput) { tdmInput = input }
-    fun updateTdmResult(result: TDMResult) { tdmResult = result }
+    fun updatePatientInfo(info: PatientInfo) {
+        patientInfo = info
+    }
+
+    fun setWorkflow(workflow: TDMWorkflow) {
+        selectedWorkflow = workflow
+    }
+
+    fun setTDMInput(input: TDMInput) {
+        tdmInput = input
+    }
+
+    fun updateTdmResult(result: TDMResult) {
+        tdmResult = result
+    }
 
     fun reset() {
         patientInfo = null
@@ -40,9 +52,12 @@ class CaseViewModel : ViewModel() {
 }
 
 @Composable
-fun rememberSharedCaseViewModel(navController: NavController): CaseViewModel {
+fun rememberSharedCaseViewModel(
+    navController: NavController
+): CaseViewModel {
     val parentEntry = remember(navController.currentBackStackEntry) {
         navController.getBackStackEntry(AppRoutes.HOME)
     }
+
     return viewModel(parentEntry)
 }

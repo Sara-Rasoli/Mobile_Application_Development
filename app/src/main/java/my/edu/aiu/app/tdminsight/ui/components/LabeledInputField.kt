@@ -29,26 +29,55 @@ fun LabeledInputField(
         Row {
             Text(label, style = MaterialTheme.typography.bodyMedium)
             if (required) {
-                Text(" *", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    " *",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
+
         Spacer(modifier = Modifier.height(6.dp))
+
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            trailingIcon = unit?.let { { Text(it, color = TextSecondary, style = MaterialTheme.typography.bodySmall) } },
+            trailingIcon = unit?.let {
+                {
+                    Text(
+                        it,
+                        color = TextSecondary,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            },
             isError = isError,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             modifier = Modifier.fillMaxWidth()
         )
+
         Spacer(modifier = Modifier.height(4.dp))
+
         if (isError && errorText != null) {
-            Text(errorText, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            Text(
+                errorText,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
         } else {
             Row(verticalAlignment = Alignment.Top) {
-                Icon(Icons.Filled.Info, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                Icon(
+                    Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(14.dp)
+                )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(helperText, color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+                Text(
+                    helperText,
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }
