@@ -22,7 +22,10 @@ private val TDMColorScheme = lightColorScheme(
     onSurface = TextPrimary,
     outline = BorderLight,
     surfaceVariant = PageBackground,
-    onSurfaceVariant = TextSecondary
+    onSurfaceVariant = TextSecondary,
+    error = ErrorRed,
+    onError = CardWhite
+
 )
 
 private val TDMShapes = Shapes(

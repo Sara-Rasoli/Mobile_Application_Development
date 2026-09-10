@@ -21,44 +21,56 @@ fun PreInputForm(
     errors: Map<String, String>
 ) {
     Column {
-        OutlinedTextField(
-            value = doseMg,
-            onValueChange = onDoseMgChange,
-            label = { Text("Dose (mg)") },
-            isError = errors.containsKey("doseMg"),
-            supportingText = { errors["doseMg"]?.let { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = intervalHr,
-            onValueChange = onIntervalHrChange,
-            label = { Text("Dosing Interval (hr)") },
-            isError = errors.containsKey("intervalHr"),
-            supportingText = { errors["intervalHr"]?.let { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = infusionDurationHr,
-            onValueChange = onInfusionDurationHrChange,
-            label = { Text("Infusion Duration (hr)") },
-            isError = errors.containsKey("infusionDurationHr"),
-            supportingText = { errors["infusionDurationHr"]?.let { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(
-            value = preLevelConc,
-            onValueChange = onPreLevelConcChange,
-            label = { Text("Pre-dose (trough) Level (mg/L)") },
-            isError = errors.containsKey("preLevelConc"),
-            supportingText = { errors["preLevelConc"]?.let { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
-        )
+        SectionCard {
+            Text("Dose Information", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
+                value = doseMg,
+                onValueChange = onDoseMgChange,
+                label = { Text("Dose (mg)") },
+                isError = errors.containsKey("doseMg"),
+                supportingText = { errors["doseMg"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        SectionCard {
+            Text("Dosing Schedule", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
+                value = intervalHr,
+                onValueChange = onIntervalHrChange,
+                label = { Text("Dosing Interval (hr)") },
+                isError = errors.containsKey("intervalHr"),
+                supportingText = { errors["intervalHr"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
+                value = infusionDurationHr,
+                onValueChange = onInfusionDurationHrChange,
+                label = { Text("Infusion Duration (hr)") },
+                isError = errors.containsKey("infusionDurationHr"),
+                supportingText = { errors["infusionDurationHr"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        SectionCard {
+            Text("Concentration Information", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
+                value = preLevelConc,
+                onValueChange = onPreLevelConcChange,
+                label = { Text("Pre-dose (trough) Level (mg/L)") },
+                isError = errors.containsKey("preLevelConc"),
+                supportingText = { errors["preLevelConc"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }

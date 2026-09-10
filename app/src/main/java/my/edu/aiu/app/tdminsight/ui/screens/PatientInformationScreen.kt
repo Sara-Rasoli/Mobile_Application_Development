@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import my.edu.aiu.app.tdminsight.model.Gender
 import my.edu.aiu.app.tdminsight.model.PatientInfo
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
@@ -17,6 +18,8 @@ import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 private val TDM_STEPS = listOf("Home", "Patient", "Workflow", "Inputs", "Review", "Results", "Explanation")
 
@@ -25,7 +28,10 @@ fun PatientInformationScreen(navController: NavController) {
     val caseViewModel = rememberSharedCaseViewModel(navController)
 
     var caseId by remember { mutableStateOf("") }
+    var patientName by remember { mutableStateOf("") }
+    var selectedGender by remember { mutableStateOf<Gender?>(null) }
     var ageText by remember { mutableStateOf("") }
+    var heightText by remember { mutableStateOf("") }
     var weightText by remember { mutableStateOf("") }
     var creatinineText by remember { mutableStateOf("") }
     var isPaediatric by remember { mutableStateOf(false) }
@@ -33,48 +39,128 @@ fun PatientInformationScreen(navController: NavController) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         AppHeader()
-        Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) {
             StepProgressBar(TDM_STEPS, currentStepIndex = 1)
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text("Patient Information", style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             SectionCard {
-                OutlinedTextField(value = caseId, onValueChange = { caseId = it }, label = { Text("Case ID (fictional)") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(value = ageText, onValueChange = { ageText = it }, label = { Text("Age (years)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(value = weightText, onValueChange = { weightText = it }, label = { Text("Weight (kg)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(value = creatinineText, onValueChange = { creatinineText = it }, label = { Text("Serum Creatinine (µmol/L)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(12.dp))
+                Text("Case", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = caseId,
+                    onValueChange = { caseId = it },
+                    label = { Text("Case ID") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SectionCard {
+                Text("Patient Information", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = patientName,
+                    onValueChange = { patientName = it },
+                    label = { Text("Patient Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text("Gender", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Gender.entries.forEach { genderOption ->
+                        FilterChip(
+                            selected = selectedGender == genderOption,
+                            onClick = { selectedGender = genderOption },
+                            label = {
+                                Text(
+                                    genderOption.name.lowercase()
+                                        .replaceFirstChar { it.uppercase() }
+                                )
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = ageText,
+                    onValueChange = { ageText = it },
+                    label = { Text("Age (years)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = heightText,
+                    onValueChange = { heightText = it },
+                    label = { Text("Height (cm)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = weightText,
+                    onValueChange = { weightText = it },
+                    label = { Text("Weight (kg)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = creatinineText,
+                    onValueChange = { creatinineText = it },
+                    label = { Text("Serum Creatinine (µmol/L)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Paediatric patient?")
                     Switch(checked = isPaediatric, onCheckedChange = { isPaediatric = it })
                 }
-                errorMessage?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(it, color = MaterialTheme.colorScheme.error)
-                }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SecondaryAppButton(text = "Back", modifier = Modifier.weight(1f)) { navController.popBackStack() }
                 PrimaryAppButton(text = "Continue", modifier = Modifier.weight(1f)) {
                     val age = ageText.toIntOrNull()
+                    val height = heightText.toDoubleOrNull()
                     val weight = weightText.toDoubleOrNull()
                     val creatinine = creatinineText.toDoubleOrNull()
                     when {
                         caseId.isBlank() -> errorMessage = "Case ID is required."
+                        patientName.isBlank() -> errorMessage = "Patient name is required."
+                        selectedGender == null -> errorMessage = "Please select a gender."
                         age == null -> errorMessage = "Age must be a whole number."
+                        height == null -> errorMessage = "Height must be a number."
                         weight == null -> errorMessage = "Weight must be a number."
                         creatinine == null -> errorMessage = "Serum creatinine must be a number."
                         else -> {
                             errorMessage = null
-                            caseViewModel.setPatientInfo(
+                            caseViewModel.updatePatientInfo(
                                 PatientInfo(
                                     caseId = caseId.trim(),
+                                    name = patientName.trim(),
+                                    gender = selectedGender!!,
+                                    heightCm = height,
                                     weightKg = weight,
                                     ageYears = age,
                                     serumCreatinine = creatinine,
@@ -86,6 +172,7 @@ fun PatientInformationScreen(navController: NavController) {
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }

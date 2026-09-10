@@ -8,5 +8,6 @@ data class TDMResult(
     val auc24: Double? = null,
     val expectedCmin: Double? = null,
     val expectedCmax: Double? = null,
-    val newSuggestedDoseMg: Double? = null
+    val newSuggestedDoseMg: Double? = null,
+    val steps: List<CalculationStep> = emptyList()
 )

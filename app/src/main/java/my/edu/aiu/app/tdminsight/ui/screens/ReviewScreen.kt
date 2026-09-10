@@ -32,7 +32,10 @@ fun ReviewScreen(navController: NavController) {
             if (patientInfo != null && workflow != null) {
                 SectionCard {
                     Text("Case ID: ${patientInfo.caseId}")
+                    Text("Name: ${patientInfo.name}")
+                    Text("Gender: ${patientInfo.gender.name.lowercase().replaceFirstChar { it.uppercase() }}")
                     Text("Age: ${patientInfo.ageYears}")
+                    Text("Height: ${patientInfo.heightCm} cm")
                     Text("Weight: ${patientInfo.weightKg} kg")
                     Text("Serum Creatinine: ${patientInfo.serumCreatinine}")
                     Text("Paediatric: ${if (patientInfo.isPaediatric) "Yes" else "No"}")
