@@ -167,6 +167,27 @@ fun CalculationExplanationScreen(navController: NavController) {
                 context.startActivity(Intent.createChooser(shareIntent, "Share calculation summary"))
             }
 
+            Spacer(modifier = Modifier.height(10.dp))
+
+// Export as PDF button
+            SecondaryAppButton(
+                text = "Export as PDF",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val pdfUri = my.edu.aiu.app.tdminsight.util.PdfExporter.generateSummaryPdf(
+                    context = context,
+                    patientInfo = patientInfo,
+                    workflow = workflow,
+                    result = result
+                )
+                val pdfShareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    putExtra(Intent.EXTRA_STREAM, pdfUri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(pdfShareIntent, "Share PDF summary"))
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
             // Back to Results button
