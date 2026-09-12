@@ -12,6 +12,7 @@ import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
 import my.edu.aiu.app.tdminsight.ui.theme.TextSecondary
+import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 
 @Composable
 fun CalculationHistoryScreen(navController: NavController) {
@@ -49,6 +50,8 @@ fun CalculationHistoryScreen(navController: NavController) {
             SecondaryAppButton(text = "Back", modifier = Modifier.fillMaxWidth()) {
                 navController.popBackStack()
             }
+            Spacer(modifier = Modifier.height(20.dp))
+            AppFooter()
         }
     }
 }

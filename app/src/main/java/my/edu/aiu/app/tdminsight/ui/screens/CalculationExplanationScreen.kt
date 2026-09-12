@@ -22,6 +22,7 @@ import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
 import my.edu.aiu.app.tdminsight.ui.theme.TextSecondary
 import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
+import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 
 private val TDM_STEPS = listOf(
     "Home",
@@ -195,6 +196,8 @@ fun CalculationExplanationScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+            AppFooter()
         }
     }
 }

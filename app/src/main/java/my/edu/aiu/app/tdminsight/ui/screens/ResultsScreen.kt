@@ -16,6 +16,7 @@ import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
+import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 
 private val TDM_STEPS = listOf("Home", "Patient", "Workflow", "Inputs", "Review", "Results", "Explanation")
 
@@ -72,6 +73,8 @@ fun ResultsScreen(navController: NavController) {
             } else {
                 Text("No input data found — please go back and complete previous steps.")
             }
+            Spacer(modifier = Modifier.height(20.dp))
+            AppFooter()
         }
     }
 }

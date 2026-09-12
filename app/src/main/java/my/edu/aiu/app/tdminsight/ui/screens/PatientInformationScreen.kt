@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.model.Gender
 import my.edu.aiu.app.tdminsight.model.PatientInfo
+import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.LabeledInputField
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
@@ -43,15 +44,16 @@ private fun Gender.displayLabel(): String = when (this) {
 @Composable
 fun PatientInformationScreen(navController: NavController) {
     val caseViewModel = rememberSharedCaseViewModel(navController)
+    val existing = caseViewModel.patientInfo
 
-    var caseId by remember { mutableStateOf("") }
-    var patientName by remember { mutableStateOf("") }
-    var selectedGender by remember { mutableStateOf<Gender?>(null) }
-    var ageText by remember { mutableStateOf("") }
-    var heightText by remember { mutableStateOf("") }
-    var weightText by remember { mutableStateOf("") }
-    var creatinineText by remember { mutableStateOf("") }
-    var isPaediatric by remember { mutableStateOf(false) }
+    var caseId by remember { mutableStateOf(existing?.caseId ?: "") }
+    var patientName by remember { mutableStateOf(existing?.name ?: "") }
+    var selectedGender by remember { mutableStateOf(existing?.gender) }
+    var ageText by remember { mutableStateOf(existing?.ageYears?.toString() ?: "") }
+    var heightText by remember { mutableStateOf(existing?.heightCm?.toString() ?: "") }
+    var weightText by remember { mutableStateOf(existing?.weightKg?.toString() ?: "") }
+    var creatinineText by remember { mutableStateOf(existing?.serumCreatinine?.toString() ?: "") }
+    var isPaediatric by remember { mutableStateOf(existing?.isPaediatric ?: false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -244,7 +246,8 @@ fun PatientInformationScreen(navController: NavController) {
             SecondaryAppButton(text = "Back", modifier = Modifier.fillMaxWidth()) {
                 navController.popBackStack()
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+            AppFooter()
         }
     }
 }
