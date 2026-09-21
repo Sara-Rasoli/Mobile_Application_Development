@@ -1,26 +1,33 @@
 package my.edu.aiu.app.tdminsight.util
 
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import my.edu.aiu.app.tdminsight.model.PatientInfo
 import my.edu.aiu.app.tdminsight.model.TDMResult
 import my.edu.aiu.app.tdminsight.model.TDMWorkflow
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object PdfExporter {
 
-    fun generateSummaryPdf(
-        context: Context,
+    private fun buildPdf(
         patientInfo: PatientInfo?,
         workflow: TDMWorkflow?,
         result: TDMResult?
-    ): Uri {
+    ): PdfDocument {
         val document = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
         val page = document.startPage(pageInfo)
@@ -32,8 +39,10 @@ object PdfExporter {
         val smallPaint = Paint().apply { textSize = 10f; color = Color.GRAY }
 
         var y = 40f
+        val timestamp = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date())
         canvas.drawText("TDM Insight — Calculation Summary", 40f, y, titlePaint); y += 20f
-        canvas.drawText("Academic prototype — fictional case only", 40f, y, smallPaint); y += 30f
+        canvas.drawText("Generated: $timestamp", 40f, y, smallPaint); y += 14f
+        canvas.drawText("Academic prototype — fictional case only. Not a clinically validated system.", 40f, y, smallPaint); y += 30f
 
         patientInfo?.let {
             canvas.drawText("Case ID: ${it.caseId}", 40f, y, bodyPaint); y += 18f
@@ -68,13 +77,61 @@ object PdfExporter {
         }
 
         document.finishPage(page)
+        return document
+    }
 
+    /** Saves the PDF into the phone's Downloads folder, visible in the Files app. Returns true on success. */
+    fun saveToDownloads(
+        context: Context,
+        patientInfo: PatientInfo?,
+        workflow: TDMWorkflow?,
+        result: TDMResult?
+    ): Boolean {
+        val document = buildPdf(patientInfo, workflow, result)
+        val fileName = "TDM_Insight_${System.currentTimeMillis()}.pdf"
+
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Android 10+: use MediaStore, no special permission needed.
+                val resolver = context.contentResolver
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                    put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/TDMInsight")
+                }
+                val uri: Uri? = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                uri?.let {
+                    resolver.openOutputStream(it)?.use { out: OutputStream -> document.writeTo(out) }
+                } ?: return false
+            } else {
+                // Android 9 and below: write directly (requires WRITE_EXTERNAL_STORAGE permission, requested by the caller).
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val appDir = File(downloadsDir, "TDMInsight")
+                if (!appDir.exists()) appDir.mkdirs()
+                val file = File(appDir, fileName)
+                FileOutputStream(file).use { document.writeTo(it) }
+            }
+            document.close()
+            true
+        } catch (e: Exception) {
+            document.close()
+            false
+        }
+    }
+
+    /** Generates a PDF into the app cache and returns a shareable content:// URI. */
+    fun generateSummaryPdf(
+        context: Context,
+        patientInfo: PatientInfo?,
+        workflow: TDMWorkflow?,
+        result: TDMResult?
+    ): Uri {
+        val document = buildPdf(patientInfo, workflow, result)
         val exportDir = File(context.cacheDir, "pdf_exports")
         if (!exportDir.exists()) exportDir.mkdirs()
         val file = File(exportDir, "TDM_Insight_Summary.pdf")
         FileOutputStream(file).use { document.writeTo(it) }
         document.close()
-
         return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
 }
