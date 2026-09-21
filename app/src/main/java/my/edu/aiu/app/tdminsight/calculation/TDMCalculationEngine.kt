@@ -4,6 +4,7 @@ import my.edu.aiu.app.tdminsight.model.TDMInput
 import my.edu.aiu.app.tdminsight.model.TDMResult
 
 class TDMCalculationEngine {
+
     private val preCalculator = PreCalculator()
     private val postCalculator = PostCalculator()
     private val prePostCalculator = PrePostCalculator()
