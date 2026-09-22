@@ -31,7 +31,9 @@ fun StepProgressBar(steps: List<String>, currentStepIndex: Int) {
         steps.forEachIndexed { index, label ->
             val isDone = index < currentStepIndex
             val isCurrent = index == currentStepIndex
-            val circleColor = if (isDone || isCurrent) TealPrimary else StepInactive
+            val circleColor =
+                if (isDone || isCurrent) TealPrimary else StepInactive
+
             Box(
                 modifier = Modifier
                     .size(24.dp)
@@ -39,20 +41,37 @@ fun StepProgressBar(steps: List<String>, currentStepIndex: Int) {
                 contentAlignment = Alignment.Center
             ) {
                 if (isDone) {
-                    Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(14.dp)
+                    )
                 } else {
-                    Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "${index + 1}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
+
             Spacer(modifier = Modifier.width(6.dp))
+
             Text(
                 label,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (isCurrent) TealPrimary else TextSecondary
             )
+
             if (index != steps.lastIndex) {
                 Spacer(modifier = Modifier.width(8.dp))
-                Box(modifier = Modifier.width(20.dp).height(1.dp).background(StepInactive))
+                Box(
+                    modifier = Modifier
+                        .width(20.dp)
+                        .height(1.dp)
+                        .background(StepInactive)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
             }
         }

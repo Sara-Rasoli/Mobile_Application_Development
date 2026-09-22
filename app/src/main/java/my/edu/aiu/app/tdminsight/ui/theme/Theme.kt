@@ -25,7 +25,6 @@ private val TDMColorScheme = lightColorScheme(
     onSurfaceVariant = TextSecondary,
     error = ErrorRed,
     onError = CardWhite
-
 )
 
 private val TDMShapes = Shapes(
@@ -35,12 +34,36 @@ private val TDMShapes = Shapes(
 )
 
 private val TDMTypography = Typography(
-    headlineMedium = TextStyle(fontWeight = FontWeight.Bold, fontSize = 24.sp, color = TextPrimary),
-    headlineSmall = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp, color = TextPrimary),
-    titleMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 16.sp, color = TextPrimary),
-    bodyMedium = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp, color = TextPrimary),
-    bodySmall = TextStyle(fontWeight = FontWeight.Normal, fontSize = 13.sp, color = TextSecondary),
-    labelSmall = TextStyle(fontWeight = FontWeight.Normal, fontSize = 12.sp, color = TextSecondary)
+    headlineMedium = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        color = TextPrimary
+    ),
+    headlineSmall = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        color = TextPrimary
+    ),
+    titleMedium = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        color = TextPrimary
+    ),
+    bodyMedium = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        color = TextPrimary
+    ),
+    bodySmall = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        color = TextSecondary
+    ),
+    labelSmall = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        color = TextSecondary
+    )
 )
 
 @Composable

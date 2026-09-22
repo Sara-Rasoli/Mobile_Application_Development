@@ -1,38 +1,251 @@
 package my.edu.aiu.app.tdminsight.ui.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import android.content.Intent
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import my.edu.aiu.app.tdminsight.model.PatientInfo
+import my.edu.aiu.app.tdminsight.model.TDMResult
+import my.edu.aiu.app.tdminsight.model.TDMWorkflow
+import my.edu.aiu.app.tdminsight.ui.components.AppFooter
+import my.edu.aiu.app.tdminsight.ui.components.AppHeader
+import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
+import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.SectionCard
+import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
+import my.edu.aiu.app.tdminsight.ui.theme.TextSecondary
+import my.edu.aiu.app.tdminsight.util.PdfExporter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-@Composable
-fun CalculationExplanationScreen(navController: NavController) {
-    val caseViewModel = rememberSharedCaseViewModel(navController)
-    val steps = caseViewModel.tdmResult?.steps ?: emptyList()
+private val TDM_STEPS = listOf(
+    "Home", "Patient", "Workflow", "Inputs", "Review", "Results", "Explanation"
+)
 
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-        Text("Calculation Explanation", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+private fun buildTextSummary(
+    patientInfo: PatientInfo?,
+    workflow: TDMWorkflow?,
+    result: TDMResult?
+): String {
+    val builder = StringBuilder()
+    val timestamp = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date())
 
-        steps.forEach { step ->
-            Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(step.label, style = MaterialTheme.typography.titleSmall)
-                    Text(step.value, style = MaterialTheme.typography.bodyMedium)
-                    if (step.note.isNotBlank()) {
-                        Text(step.note, style = MaterialTheme.typography.labelSmall)
-                    }
+    builder.append("TDM Insight — Calculation Summary\n")
+    builder.append("Generated: $timestamp\n\n")
+
+    if (patientInfo != null) {
+        builder.append("Case & Patient:\n")
+        builder.append("• Case ID: ${patientInfo.caseId}\n")
+        builder.append("• Patient: ${patientInfo.name} (${patientInfo.gender.name.lowercase().replaceFirstChar { it.uppercase() }}, ${patientInfo.ageYears}y)\n")
+        builder.append("• Height: ${patientInfo.heightCm} cm | Weight: ${patientInfo.weightKg} kg\n")
+        builder.append("• Serum Creatinine: ${patientInfo.serumCreatinine} µmol/L | Paediatric: ${if (patientInfo.isPaediatric) "Yes" else "No"}\n\n")
+    }
+
+    if (workflow != null) {
+        builder.append("Workflow: ${workflow.name.replace('_', '+')}\n\n")
+    }
+
+    if (result != null) {
+        builder.append("Pharmacokinetic Parameters:\n")
+        builder.append("• Elimination Rate (Ke): %.4f /hr\n".format(result.ke))
+        builder.append("• Half-life (t½): %.2f hr\n".format(result.halfLifeHr))
+        builder.append("• Volume of Distribution (Vd): %.2f L\n".format(result.vd))
+        result.clearance?.let { builder.append("• Clearance (CL): %.2f L/hr\n".format(it)) }
+        result.aucTau?.let { builder.append("• AUC (interval): %.2f mg·h/L\n".format(it)) }
+        result.auc24?.let { builder.append("• AUC (24h): %.2f mg·h/L\n".format(it)) }
+        result.expectedCmin?.let { builder.append("• Steady-state Trough (Cmin,ss): %.2f mg/L\n".format(it)) }
+        result.expectedCmax?.let { builder.append("• Steady-state Peak (Cmax,ss): %.2f mg/L\n".format(it)) }
+
+        if (result.steps.isNotEmpty()) {
+            builder.append("\nCalculation Steps:\n")
+            result.steps.forEach { step ->
+                builder.append("• ${step.label}: ${step.value}\n")
+                if (step.note.isNotBlank()) {
+                    builder.append("  (${step.note})\n")
                 }
             }
         }
+    } else {
+        builder.append("No calculation results available.\n")
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { navController.popBackStack(route = AppRoutes.HOME, inclusive = false) }) {
-            Text("Back to Home")
+    builder.append("\nAcademic prototype — fictional case only. Not a clinically validated system.")
+    return builder.toString()
+}
+
+@Composable
+fun CalculationExplanationScreen(navController: NavController) {
+
+    val caseViewModel = rememberSharedCaseViewModel(navController)
+    val steps = caseViewModel.tdmResult?.steps ?: emptyList()
+    val context = LocalContext.current
+    val patientInfo = caseViewModel.patientInfo
+    val workflow = caseViewModel.selectedWorkflow
+    val result = caseViewModel.tdmResult
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            try {
+                val saved = PdfExporter.saveToDownloads(context, patientInfo, workflow, result)
+                Toast.makeText(
+                    context,
+                    if (saved) "Saved to Downloads/TDMInsight" else "Save failed",
+                    Toast.LENGTH_LONG
+                ).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Export error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "Storage permission needed to save", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+
+        AppHeader(navController)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) {
+
+            StepProgressBar(steps = TDM_STEPS, currentStepIndex = 6)
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ScreenTitleRow(icon = Icons.Filled.MenuBook, title = "Calculation Explanation")
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Review how the pharmacokinetic parameters were calculated from the entered data.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (steps.isNotEmpty()) {
+                steps.forEach { step ->
+                    SectionCard {
+                        Text(text = step.label, style = MaterialTheme.typography.titleMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = step.value, style = MaterialTheme.typography.bodyMedium)
+                        if (step.note.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(text = step.note, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+            } else {
+                SectionCard {
+                    Text(text = "No calculation data available", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Please complete a TDM calculation before viewing the explanation.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Share Summary button (text summary)
+            SecondaryAppButton(
+                text = "Share Summary",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                try {
+                    val summaryText = buildTextSummary(patientInfo, workflow, result)
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "TDM Insight Summary - ${patientInfo?.caseId ?: "Case"}")
+                        putExtra(Intent.EXTRA_TEXT, summaryText)
+                    }
+                    val chooserIntent = Intent.createChooser(shareIntent, "Share Summary")
+                    context.startActivity(chooserIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        context,
+                        "Unable to share summary: ${e.localizedMessage}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Export as PDF button
+            SecondaryAppButton(
+                text = "Export as PDF",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        val saved = PdfExporter.saveToDownloads(context, patientInfo, workflow, result)
+                        Toast.makeText(
+                            context,
+                            if (saved) "Saved to Downloads/TDMInsight" else "Save failed",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        permissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Export PDF failed: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Back to Results button
+            PrimaryAppButton(
+                text = "Back to Results",
+                modifier = Modifier.fillMaxWidth(),
+                showIcon = false
+            ) {
+                navController.navigate(AppRoutes.RESULTS) {
+                    popUpTo(AppRoutes.RESULTS) { inclusive = true }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Back to Home button
+            SecondaryAppButton(
+                text = "Back to Home",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                navController.popBackStack(route = AppRoutes.HOME, inclusive = false)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            AppFooter()
         }
     }
 }

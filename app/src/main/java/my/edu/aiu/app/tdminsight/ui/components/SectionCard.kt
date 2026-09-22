@@ -14,14 +14,20 @@ import my.edu.aiu.app.tdminsight.ui.theme.BorderLight
 import my.edu.aiu.app.tdminsight.ui.theme.CardWhite
 
 @Composable
-fun SectionCard(content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+fun SectionCard(
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit
+) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.outlinedCardColors(containerColor = CardWhite),
         border = BorderStroke(1.dp, BorderLight),
         shape = MaterialTheme.shapes.medium
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
             content()
         }
     }

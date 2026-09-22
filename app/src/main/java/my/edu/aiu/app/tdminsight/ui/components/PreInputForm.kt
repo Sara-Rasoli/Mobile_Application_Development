@@ -1,15 +1,17 @@
 package my.edu.aiu.app.tdminsight.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
-import androidx.compose.runtime.*
-import my.edu.aiu.app.tdminsight.ui.camera.LabReportOcrScanner
 
 @Composable
 fun PreInputForm(
@@ -23,8 +25,6 @@ fun PreInputForm(
     onPreLevelConcChange: (String) -> Unit,
     errors: Map<String, String>
 ) {
-    var isPreScanned by remember { mutableStateOf(false) }
-
     Column {
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
@@ -67,29 +67,12 @@ fun PreInputForm(
         SectionCard {
             Text("Concentration Information", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(10.dp))
-            OutlinedTextField(
+            ConcentrationInputField(
+                label = "Pre-dose (trough) Level (mg/L)",
                 value = preLevelConc,
-                onValueChange = {
-                    isPreScanned = false
-                    onPreLevelConcChange(it)
-                },
-                label = { Text("Pre-dose (trough) Level (mg/L)") },
+                onValueChange = onPreLevelConcChange,
                 isError = errors.containsKey("preLevelConc"),
-                supportingText = {
-                    if (isPreScanned) {
-                        Text("Scanned - please verify against the report")
-                    } else {
-                        errors["preLevelConc"]?.let { Text(it) }
-                    }
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    LabReportOcrScanner(onValueSelected = {
-                        isPreScanned = true
-                        onPreLevelConcChange(it.toString())
-                    })
-                }
+                errorText = errors["preLevelConc"]
             )
         }
     }

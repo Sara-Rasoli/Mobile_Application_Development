@@ -1,15 +1,17 @@
 package my.edu.aiu.app.tdminsight.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-
-import androidx.compose.runtime.*
-import my.edu.aiu.app.tdminsight.ui.camera.LabReportOcrScanner
 
 @Composable
 fun PostInputForm(
@@ -25,8 +27,6 @@ fun PostInputForm(
     onPostLevelConcChange: (String) -> Unit,
     errors: Map<String, String>
 ) {
-    var isPostScanned by remember { mutableStateOf(false) }
-
     Column {
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
@@ -79,29 +79,12 @@ fun PostInputForm(
         SectionCard {
             Text("Concentration Information", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(10.dp))
-            OutlinedTextField(
+            ConcentrationInputField(
+                label = "Post-dose (peak) Level (mg/L)",
                 value = postLevelConc,
-                onValueChange = {
-                    isPostScanned = false
-                    onPostLevelConcChange(it)
-                },
-                label = { Text("Post-dose (peak) Level (mg/L)") },
+                onValueChange = onPostLevelConcChange,
                 isError = errors.containsKey("postLevelConc"),
-                supportingText = {
-                    if (isPostScanned) {
-                        Text("Scanned - please verify against the report")
-                    } else {
-                        errors["postLevelConc"]?.let { Text(it) }
-                    }
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    LabReportOcrScanner(onValueSelected = {
-                        isPostScanned = true
-                        onPostLevelConcChange(it.toString())
-                    })
-                }
+                errorText = errors["postLevelConc"]
             )
         }
     }
