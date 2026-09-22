@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.runtime.*
+import my.edu.aiu.app.tdminsight.ui.camera.LabReportOcrScanner
+
 @Composable
 fun PostInputForm(
     doseMg: String,
@@ -22,6 +25,8 @@ fun PostInputForm(
     onPostLevelConcChange: (String) -> Unit,
     errors: Map<String, String>
 ) {
+    var isPostScanned by remember { mutableStateOf(false) }
+
     Column {
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
@@ -76,12 +81,27 @@ fun PostInputForm(
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 value = postLevelConc,
-                onValueChange = onPostLevelConcChange,
+                onValueChange = {
+                    isPostScanned = false
+                    onPostLevelConcChange(it)
+                },
                 label = { Text("Post-dose (peak) Level (mg/L)") },
                 isError = errors.containsKey("postLevelConc"),
-                supportingText = { errors["postLevelConc"]?.let { Text(it) } },
+                supportingText = {
+                    if (isPostScanned) {
+                        Text("Scanned - please verify against the report")
+                    } else {
+                        errors["postLevelConc"]?.let { Text(it) }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    LabReportOcrScanner(onValueSelected = {
+                        isPostScanned = true
+                        onPostLevelConcChange(it.toString())
+                    })
+                }
             )
         }
     }

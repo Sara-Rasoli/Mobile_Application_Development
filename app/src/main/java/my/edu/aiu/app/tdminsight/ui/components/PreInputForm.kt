@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.runtime.*
+import my.edu.aiu.app.tdminsight.ui.camera.LabReportOcrScanner
+
 @Composable
 fun PreInputForm(
     doseMg: String,
@@ -20,6 +23,8 @@ fun PreInputForm(
     onPreLevelConcChange: (String) -> Unit,
     errors: Map<String, String>
 ) {
+    var isPreScanned by remember { mutableStateOf(false) }
+
     Column {
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
@@ -64,12 +69,27 @@ fun PreInputForm(
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 value = preLevelConc,
-                onValueChange = onPreLevelConcChange,
+                onValueChange = {
+                    isPreScanned = false
+                    onPreLevelConcChange(it)
+                },
                 label = { Text("Pre-dose (trough) Level (mg/L)") },
                 isError = errors.containsKey("preLevelConc"),
-                supportingText = { errors["preLevelConc"]?.let { Text(it) } },
+                supportingText = {
+                    if (isPreScanned) {
+                        Text("Scanned - please verify against the report")
+                    } else {
+                        errors["preLevelConc"]?.let { Text(it) }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    LabReportOcrScanner(onValueSelected = {
+                        isPreScanned = true
+                        onPreLevelConcChange(it.toString())
+                    })
+                }
             )
         }
     }

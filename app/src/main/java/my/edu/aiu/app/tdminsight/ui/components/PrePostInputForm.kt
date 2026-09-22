@@ -8,6 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.runtime.*
+import my.edu.aiu.app.tdminsight.ui.camera.LabReportOcrScanner
+
 @Composable
 fun PrePostInputForm(
     doseMg: String,
@@ -26,6 +29,9 @@ fun PrePostInputForm(
     onPostLevelConcChange: (String) -> Unit,
     errors: Map<String, String>
 ) {
+    var isPreScanned by remember { mutableStateOf(false) }
+    var isPostScanned by remember { mutableStateOf(false) }
+
     Column {
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
@@ -90,22 +96,52 @@ fun PrePostInputForm(
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 value = preLevelConc,
-                onValueChange = onPreLevelConcChange,
+                onValueChange = {
+                    isPreScanned = false
+                    onPreLevelConcChange(it)
+                },
                 label = { Text("Pre-dose (trough) Level (mg/L)") },
                 isError = errors.containsKey("preLevelConc"),
-                supportingText = { errors["preLevelConc"]?.let { Text(it) } },
+                supportingText = {
+                    if (isPreScanned) {
+                        Text("Scanned - please verify against the report")
+                    } else {
+                        errors["preLevelConc"]?.let { Text(it) }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    LabReportOcrScanner(onValueSelected = {
+                        isPreScanned = true
+                        onPreLevelConcChange(it.toString())
+                    })
+                }
             )
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 value = postLevelConc,
-                onValueChange = onPostLevelConcChange,
+                onValueChange = {
+                    isPostScanned = false
+                    onPostLevelConcChange(it)
+                },
                 label = { Text("Post-dose (peak) Level (mg/L)") },
                 isError = errors.containsKey("postLevelConc"),
-                supportingText = { errors["postLevelConc"]?.let { Text(it) } },
+                supportingText = {
+                    if (isPostScanned) {
+                        Text("Scanned - please verify against the report")
+                    } else {
+                        errors["postLevelConc"]?.let { Text(it) }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    LabReportOcrScanner(onValueSelected = {
+                        isPostScanned = true
+                        onPostLevelConcChange(it.toString())
+                    })
+                }
             )
         }
     }
