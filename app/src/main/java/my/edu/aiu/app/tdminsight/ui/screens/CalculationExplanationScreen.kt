@@ -27,6 +27,7 @@ import my.edu.aiu.app.tdminsight.model.TDMResult
 import my.edu.aiu.app.tdminsight.model.TDMWorkflow
 import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
+import my.edu.aiu.app.tdminsight.ui.components.ClinicalPlausibilityCard
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
 import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
@@ -99,6 +100,7 @@ private fun buildTextSummary(
 fun CalculationExplanationScreen(navController: NavController) {
 
     val caseViewModel = rememberSharedCaseViewModel(navController)
+    val input = caseViewModel.tdmInput
     val steps = caseViewModel.tdmResult?.steps ?: emptyList()
     val context = LocalContext.current
     val patientInfo = caseViewModel.patientInfo
@@ -147,6 +149,15 @@ fun CalculationExplanationScreen(navController: NavController) {
                 color = TextSecondary
             )
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (result != null) {
+                ClinicalPlausibilityCard(
+                    result = result,
+                    input = input,
+                    patientInfo = patientInfo
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+            }
 
             if (steps.isNotEmpty()) {
                 steps.forEach { step ->

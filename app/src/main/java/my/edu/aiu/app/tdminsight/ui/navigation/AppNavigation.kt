@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import my.edu.aiu.app.tdminsight.ui.screens.CalculationExplanationScreen
 import my.edu.aiu.app.tdminsight.ui.screens.CalculationHistoryScreen
 import my.edu.aiu.app.tdminsight.ui.screens.DynamicInputScreen
+import my.edu.aiu.app.tdminsight.ui.screens.ExploreDosingScreen
 import my.edu.aiu.app.tdminsight.ui.screens.HomeScreen
 import my.edu.aiu.app.tdminsight.ui.screens.PatientInformationScreen
 import my.edu.aiu.app.tdminsight.ui.screens.ResultsScreen
@@ -53,6 +54,10 @@ fun AppNavigation(
 
         composable(AppRoutes.CALCULATION_HISTORY) {
             CalculationHistoryScreen(navController)
+        }
+
+        composable(AppRoutes.EXPLORE_DOSING) {
+            ExploreDosingScreen(navController)
         }
     }
 }

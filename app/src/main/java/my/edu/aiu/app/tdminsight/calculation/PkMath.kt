@@ -3,6 +3,11 @@ package my.edu.aiu.app.tdminsight.calculation
 import kotlin.math.exp
 import kotlin.math.ln
 
+data class CurvePoint(
+    val timeHr: Double,
+    val concentrationMgL: Double
+)
+
 object PkMath {
 
     /**
@@ -65,6 +70,29 @@ object PkMath {
         } else {
             cmaxSs * exp(-ke * (normalizedT - tinf))
         }
+    }
+
+    /**
+     * Generates a series of time-concentration points over multiple dosing intervals.
+     */
+    fun generateCurvePoints(
+        doseMg: Double,
+        tinf: Double,
+        tau: Double,
+        ke: Double,
+        vd: Double,
+        stepHr: Double = 0.05,
+        intervalsToShow: Double = 2.5
+    ): List<CurvePoint> {
+        val totalDuration = tau * intervalsToShow
+        val points = mutableListOf<CurvePoint>()
+        var t = 0.0
+        while (t <= totalDuration + 1e-9) {
+            val c = calculateConcentration(doseMg, tinf, tau, ke, vd, t)
+            points += CurvePoint(timeHr = t, concentrationMgL = c)
+            t += stepHr
+        }
+        return points
     }
 
     /**

@@ -4,6 +4,7 @@ import my.edu.aiu.app.tdminsight.model.TDMInput
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PkCalculatorsTest {
@@ -31,6 +32,50 @@ class PkCalculatorsTest {
         // Test bisection search solver
         val solvedKe = PkMath.solveKeForConcentration(dose, tinf, tau, trueVd, tau, cminSs)
         assertEquals(trueKe, solvedKe, 0.0001)
+    }
+
+    @Test
+    fun testGenerateCurvePointsAndSteadyStateRepetition() {
+        val dose = 1000.0
+        val tinf = 1.0
+        val tau = 12.0
+        val ke = 0.08
+        val vd = 45.0
+
+        val cmaxSs = PkMath.calculateCmaxSs(dose, tinf, tau, ke, vd)
+        val cminSs = PkMath.calculateCminSs(cmaxSs, ke, tau, tinf)
+
+        val points = PkMath.generateCurvePoints(
+            doseMg = dose,
+            tinf = tinf,
+            tau = tau,
+            ke = ke,
+            vd = vd,
+            stepHr = 0.1,
+            intervalsToShow = 2.5
+        )
+
+        assertTrue(points.isNotEmpty())
+
+        // t = 0 -> Cmin,ss
+        val pAt0 = points.first { kotlin.math.abs(it.timeHr - 0.0) < 1e-6 }
+        assertEquals(cminSs, pAt0.concentrationMgL, 0.001)
+
+        // t = tinf -> Cmax,ss
+        val pAtTinf = points.first { kotlin.math.abs(it.timeHr - tinf) < 1e-6 }
+        assertEquals(cmaxSs, pAtTinf.concentrationMgL, 0.001)
+
+        // t = tau -> Cmin,ss
+        val pAtTau = points.first { kotlin.math.abs(it.timeHr - tau) < 1e-6 }
+        assertEquals(cminSs, pAtTau.concentrationMgL, 0.001)
+
+        // Repeat check across intervals: C(t) == C(t + tau)
+        val testTimes = listOf(0.5, 1.0, 3.0, 6.0, 10.0, 12.0)
+        for (t in testTimes) {
+            val c1 = PkMath.calculateConcentration(dose, tinf, tau, ke, vd, t)
+            val c2 = PkMath.calculateConcentration(dose, tinf, tau, ke, vd, t + tau)
+            assertEquals(c1, c2, 0.001)
+        }
     }
 
     @Test(expected = IllegalArgumentException::class)
