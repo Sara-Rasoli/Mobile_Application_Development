@@ -6,7 +6,8 @@ sealed class TDMInput {
         val doseMg: Double,
         val intervalHr: Double,
         val infusionDurationHr: Double,
-        val preLevelConc: Double
+        val preLevelConc: Double,
+        val micMgL: Double
     ) : TDMInput()
 
     data class Post(
@@ -14,7 +15,8 @@ sealed class TDMInput {
         val intervalHr: Double,
         val infusionDurationHr: Double,
         val samplingTimeHr: Double,
-        val postLevelConc: Double
+        val postLevelConc: Double,
+        val micMgL: Double
     ) : TDMInput()
 
     data class PrePost(
@@ -24,6 +26,7 @@ sealed class TDMInput {
         val infusionToPostGapHr: Double,
         val preToPostGapHr: Double,
         val preLevelConc: Double,
-        val postLevelConc: Double
+        val postLevelConc: Double,
+        val micMgL: Double
     ) : TDMInput()
 }

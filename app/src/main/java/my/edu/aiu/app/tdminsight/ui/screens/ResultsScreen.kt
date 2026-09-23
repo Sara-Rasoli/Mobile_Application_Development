@@ -2,7 +2,6 @@ package my.edu.aiu.app.tdminsight.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,11 +21,12 @@ import androidx.navigation.NavController
 import my.edu.aiu.app.tdminsight.calculation.TDMCalculationEngine
 import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
-import my.edu.aiu.app.tdminsight.ui.components.CalculationQualityCheck
-import my.edu.aiu.app.tdminsight.ui.components.ConcentrationTimeGraph
+import my.edu.aiu.app.tdminsight.ui.components.AucTargetBanner
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ResultParameter
+import my.edu.aiu.app.tdminsight.ui.components.ResultsParameterCard
 import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
-import my.edu.aiu.app.tdminsight.ui.components.SectionCard
+import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
@@ -42,30 +42,6 @@ private val TDM_STEPS = listOf(
 )
 
 @Composable
-private fun ResultRow(
-    label: String,
-    value: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium
-        )
-    }
-}
-
-@Composable
 fun ResultsScreen(
     navController: NavController
 ) {
@@ -76,32 +52,29 @@ fun ResultsScreen(
         caseViewModel.tdmInput
 
     LaunchedEffect(input) {
-
         if (
             input != null &&
             caseViewModel.tdmResult == null
         ) {
-
             val result =
                 TDMCalculationEngine()
                     .calculate(input)
 
-            caseViewModel.updateTdmResult(
-                result
-            )
+            caseViewModel.updateTdmResult(result)
         }
     }
 
     val result =
         caseViewModel.tdmResult
 
+    val patientInfo =
+        caseViewModel.patientInfo
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
 
-        AppHeader(
-            navController
-        )
+        AppHeader(navController)
 
         Column(
             modifier = Modifier
@@ -109,11 +82,14 @@ fun ResultsScreen(
                 .verticalScroll(
                     rememberScrollState()
                 )
-                .padding(20.dp)
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                )
         ) {
 
             StepProgressBar(
-                TDM_STEPS,
+                steps = TDM_STEPS,
                 currentStepIndex = 5
             )
 
@@ -130,184 +106,249 @@ fun ResultsScreen(
                 modifier = Modifier.height(16.dp)
             )
 
-            if (
-                result != null &&
-                input != null
-            ) {
+            if (result != null) {
 
                 // =================================================
-                // 1. CALCULATED PARAMETERS
+                // AUC TARGET STATUS
                 // =================================================
 
-                SectionCard {
+                result.auc24?.let { auc24 ->
 
-                    Text(
-                        text = "Calculated Parameters",
-                        style =
-                            MaterialTheme.typography
-                                .titleMedium
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(8.dp)
-                    )
-
-                    ResultRow(
-                        label =
-                            "Elimination Rate (Ke)",
-                        value =
-                            "%.4f /hr"
-                                .format(result.ke)
-                    )
-
-                    ResultRow(
-                        label = "Half-life",
-                        value =
-                            "%.2f hr"
-                                .format(
-                                    result.halfLifeHr
-                                )
-                    )
-
-                    ResultRow(
-                        label =
-                            "Volume of Distribution (Vd)",
-                        value =
-                            "%.2f L"
-                                .format(
-                                    result.vd
-                                )
-                    )
-
-                    result.clearance?.let {
-
-                        ResultRow(
-                            label = "Clearance",
-                            value =
-                                "%.2f L/hr"
-                                    .format(it)
-                        )
-                    }
-
-                    result.expectedCmin?.let {
-
-                        ResultRow(
-                            label =
-                                "Trough (Cmin)",
-                            value =
-                                "%.2f mg/L"
-                                    .format(it)
-                        )
-                    }
-
-                    result.expectedCmax?.let {
-
-                        ResultRow(
-                            label =
-                                "Peak (Cmax)",
-                            value =
-                                "%.2f mg/L"
-                                    .format(it)
-                        )
-                    }
-
-                    result.auc24?.let {
-
-                        ResultRow(
-                            label = "AUC24",
-                            value =
-                                "%.2f mg·hr/L"
-                                    .format(it)
-                        )
-                    }
-
-                    result.newSuggestedDoseMg?.let {
-
-                        ResultRow(
-                            label =
-                                "Suggested Dose",
-                            value =
-                                "%.0f mg"
-                                    .format(it)
-                        )
-                    }
-                }
-
-                Spacer(
-                    modifier = Modifier.height(16.dp)
-                )
-
-                // =================================================
-                // 2. FEATURE 1
-                // CONCENTRATION-TIME GRAPH
-                // =================================================
-
-                SectionCard {
-
-                    ConcentrationTimeGraph(
-                        input = input,
-                        result = result,
+                    AucTargetBanner(
+                        auc24 = auc24,
                         modifier =
                             Modifier.fillMaxWidth()
                     )
+
+                    Spacer(
+                        modifier = Modifier.height(14.dp)
+                    )
                 }
 
-                Spacer(
-                    modifier = Modifier.height(16.dp)
-                )
-
                 // =================================================
-                // 3. FEATURE 2
-                // CALCULATION QUALITY CHECK
+                // PHARMACOKINETIC PARAMETERS
                 // =================================================
 
-                CalculationQualityCheck(
-                    input = input,
-                    result = result,
+                val pharmacokineticParameters =
+                    buildList {
+
+                        /*
+                         * IBW, dosing weight and creatinine
+                         * clearance will be added in the
+                         * next stage after the approved
+                         * equations are confirmed.
+                         */
+
+                        add(
+                            ResultParameter(
+                                label = "Elimination Rate (Ke)",
+                                value =
+                                    "%.5f hr⁻¹"
+                                        .format(result.ke)
+                            )
+                        )
+
+                        add(
+                            ResultParameter(
+                                label = "Half-Life (t½)",
+                                value =
+                                    "%.2f hours"
+                                        .format(
+                                            result.halfLifeHr
+                                        )
+                            )
+                        )
+
+                        add(
+                            ResultParameter(
+                                label = "Volume of Distribution",
+                                value =
+                                    "%.2f L"
+                                        .format(result.vd)
+                            )
+                        )
+
+                        result.clearance?.let { clearance ->
+
+                            add(
+                                ResultParameter(
+                                    label = "Clearance",
+                                    value =
+                                        "%.2f L/hr"
+                                            .format(
+                                                clearance
+                                            )
+                                )
+                            )
+                        }
+                    }
+
+                ResultsParameterCard(
+                    title =
+                        "Pharmacokinetic Parameters",
+                    parameters =
+                        pharmacokineticParameters,
                     modifier =
                         Modifier.fillMaxWidth()
                 )
 
                 Spacer(
-                    modifier = Modifier.height(16.dp)
+                    modifier = Modifier.height(14.dp)
                 )
 
                 // =================================================
-                // 4. EXISTING EXPLANATION BUTTON
+                // EFFICACY PARAMETERS
+                // =================================================
+
+                val efficacyParameters =
+                    buildList {
+
+                        result.auc24?.let { auc24 ->
+
+                            add(
+                                ResultParameter(
+                                    label = "AUC24",
+                                    value =
+                                        "%.2f mg·h/L"
+                                            .format(auc24)
+                                )
+                            )
+                        }
+
+                        result.micMgL?.let { mic ->
+
+                            add(
+                                ResultParameter(
+                                    label = "MIC",
+                                    value =
+                                        "%.2f mg/L"
+                                            .format(mic)
+                                )
+                            )
+                        }
+
+                        result.aucMic?.let { aucMic ->
+
+                            add(
+                                ResultParameter(
+                                    label = "AUC/MIC",
+                                    value =
+                                        "%.2f"
+                                            .format(aucMic)
+                                )
+                            )
+                        }
+
+                        result.expectedCmax?.let { cmax ->
+
+                            add(
+                                ResultParameter(
+                                    label = "Peak (Cmax)",
+                                    value =
+                                        "%.2f mg/L"
+                                            .format(cmax)
+                                )
+                            )
+                        }
+
+                        result.expectedCmin?.let { cmin ->
+
+                            add(
+                                ResultParameter(
+                                    label = "Trough (Cmin)",
+                                    value =
+                                        "%.2f mg/L"
+                                            .format(cmin)
+                                )
+                            )
+                        }
+                    }
+
+                if (efficacyParameters.isNotEmpty()) {
+
+                    ResultsParameterCard(
+                        title =
+                            "Efficacy Parameters",
+                        parameters =
+                            efficacyParameters,
+                        modifier =
+                            Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(18.dp)
+                    )
+                }
+
+                // =================================================
+                // STEP-BY-STEP EXPLANATION
                 // =================================================
 
                 PrimaryAppButton(
-                    text = "View Explanation",
+                    text =
+                        "View Step-by-Step Explanation",
                     modifier =
                         Modifier.fillMaxWidth()
                 ) {
-
                     navController.navigate(
-                        AppRoutes
-                            .CALCULATION_EXPLANATION
+                        AppRoutes.CALCULATION_EXPLANATION
                     )
                 }
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+
+                // =================================================
+                // NEW CALCULATION
+                // =================================================
+
+                SecondaryAppButton(
+                    text = "New Calculation",
+                    modifier =
+                        Modifier.fillMaxWidth()
+                ) {
+                    caseViewModel.reset()
+
+                    navController.navigate(
+                        AppRoutes.PATIENT_INFO
+                    ) {
+                        popUpTo(
+                            AppRoutes.HOME
+                        ) {
+                            inclusive = false
+                        }
+
+                        launchSingleTop = true
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+                Text(
+                    text =
+                        "Academic Prototype — For Educational and Demonstration Purposes Only",
+                    style =
+                        MaterialTheme.typography.labelSmall
+                )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                AppFooter()
 
             } else {
 
                 Text(
                     text =
-                        "No input data found — please go back and complete previous steps.",
+                        "No input data found — please go back and complete the previous steps.",
                     style =
-                        MaterialTheme.typography
-                            .bodyMedium
+                        MaterialTheme.typography.bodyMedium
                 )
             }
-
-            Spacer(
-                modifier = Modifier.height(20.dp)
-            )
-
-            AppFooter()
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
         }
     }
 }

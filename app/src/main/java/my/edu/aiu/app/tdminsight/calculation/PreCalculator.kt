@@ -6,30 +6,56 @@ import my.edu.aiu.app.tdminsight.model.TDMResult
 import kotlin.math.ln
 
 class PreCalculator {
-    fun calculate(input: TDMInput.Pre): TDMResult {
-        val steps = mutableListOf<CalculationStep>()
+
+    fun calculate(
+        input: TDMInput.Pre
+    ): TDMResult {
+
+        val steps =
+            mutableListOf<CalculationStep>()
+
         val dose = input.doseMg
         val interval = input.intervalHr
         val tInf = input.infusionDurationHr
         val trough = input.preLevelConc
+        val mic = input.micMgL
 
-        steps += CalculationStep("Dose", "$dose mg", "Entered dose")
+        steps += CalculationStep(
+            "Dose",
+            "$dose mg",
+            "Entered dose"
+        )
+
         steps += CalculationStep(
             "Dosing Interval",
             "$interval hr",
             "Entered interval"
         )
+
         steps += CalculationStep(
             "Pre-dose (trough) Level",
             "$trough mg/L",
             "Entered trough level"
         )
 
+        steps += CalculationStep(
+            "MIC",
+            "$mic mg/L",
+            "Entered minimum inhibitory concentration"
+        )
+
         val ke =
-            if (interval > 0 && trough > 0)
-                ln(dose / (trough * tInf)) / interval
-            else
+            if (
+                interval > 0 &&
+                trough > 0
+            ) {
+                ln(
+                    dose /
+                            (trough * tInf)
+                ) / interval
+            } else {
                 0.0
+            }
 
         steps += CalculationStep(
             "Elimination Rate (Ke)",
@@ -38,10 +64,11 @@ class PreCalculator {
         )
 
         val halfLife =
-            if (ke > 0)
+            if (ke > 0) {
                 ln(2.0) / ke
-            else
+            } else {
                 0.0
+            }
 
         steps += CalculationStep(
             "Half-life",
@@ -50,10 +77,14 @@ class PreCalculator {
         )
 
         val vd =
-            if (ke > 0 && trough > 0)
+            if (
+                ke > 0 &&
+                trough > 0
+            ) {
                 dose / trough
-            else
+            } else {
                 0.0
+            }
 
         steps += CalculationStep(
             "Volume of Distribution (Vd)",
@@ -61,7 +92,8 @@ class PreCalculator {
             "Dose / Trough"
         )
 
-        val clearance = ke * vd
+        val clearance =
+            ke * vd
 
         steps += CalculationStep(
             "Clearance",
@@ -69,11 +101,44 @@ class PreCalculator {
             "Ke × Vd"
         )
 
+        val auc24 =
+            if (
+                clearance > 0 &&
+                interval > 0
+            ) {
+                (dose / clearance) *
+                        (24.0 / interval)
+            } else {
+                0.0
+            }
+
+        steps += CalculationStep(
+            "AUC24",
+            "%.2f mg·h/L".format(auc24),
+            "(Dose / Clearance) × (24 / Dosing Interval)"
+        )
+
+        val aucMic =
+            if (mic > 0) {
+                auc24 / mic
+            } else {
+                0.0
+            }
+
+        steps += CalculationStep(
+            "AUC/MIC",
+            "%.2f".format(aucMic),
+            "AUC24 / MIC"
+        )
+
         return TDMResult(
             ke = ke,
             halfLifeHr = halfLife,
             vd = vd,
             clearance = clearance,
+            auc24 = auc24,
+            micMgL = mic,
+            aucMic = aucMic,
             expectedCmin = trough,
             steps = steps
         )
