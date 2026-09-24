@@ -3,6 +3,7 @@ package my.edu.aiu.app.tdminsight.calculation
 import my.edu.aiu.app.tdminsight.model.CalculationStep
 import my.edu.aiu.app.tdminsight.model.TDMInput
 import my.edu.aiu.app.tdminsight.model.TDMResult
+import kotlin.math.exp
 import kotlin.math.ln
 
 class PreCalculator {
@@ -19,6 +20,10 @@ class PreCalculator {
         val tInf = input.infusionDurationHr
         val trough = input.preLevelConc
         val mic = input.micMgL
+
+        // =========================================================
+        // INPUT VALUES
+        // =========================================================
 
         steps += CalculationStep(
             "Dose",
@@ -44,15 +49,22 @@ class PreCalculator {
             "Entered minimum inhibitory concentration"
         )
 
+        // =========================================================
+        // ELIMINATION RATE
+        // =========================================================
+
         val ke =
             if (
                 interval > 0 &&
-                trough > 0
+                trough > 0 &&
+                tInf > 0
             ) {
+
                 ln(
                     dose /
                             (trough * tInf)
                 ) / interval
+
             } else {
                 0.0
             }
@@ -62,6 +74,10 @@ class PreCalculator {
             "%.4f".format(ke),
             "ln(Dose / (Trough × Infusion Duration)) / Interval"
         )
+
+        // =========================================================
+        // HALF-LIFE
+        // =========================================================
 
         val halfLife =
             if (ke > 0) {
@@ -76,12 +92,18 @@ class PreCalculator {
             "0.693 / Ke"
         )
 
+        // =========================================================
+        // VOLUME OF DISTRIBUTION
+        // =========================================================
+
         val vd =
             if (
                 ke > 0 &&
                 trough > 0
             ) {
+
                 dose / trough
+
             } else {
                 0.0
             }
@@ -92,6 +114,10 @@ class PreCalculator {
             "Dose / Trough"
         )
 
+        // =========================================================
+        // CLEARANCE
+        // =========================================================
+
         val clearance =
             ke * vd
 
@@ -101,13 +127,19 @@ class PreCalculator {
             "Ke × Vd"
         )
 
+        // =========================================================
+        // AUC24
+        // =========================================================
+
         val auc24 =
             if (
                 clearance > 0 &&
                 interval > 0
             ) {
+
                 (dose / clearance) *
                         (24.0 / interval)
+
             } else {
                 0.0
             }
@@ -117,6 +149,10 @@ class PreCalculator {
             "%.2f mg·h/L".format(auc24),
             "(Dose / Clearance) × (24 / Dosing Interval)"
         )
+
+        // =========================================================
+        // AUC / MIC
+        // =========================================================
 
         val aucMic =
             if (mic > 0) {
@@ -131,15 +167,59 @@ class PreCalculator {
             "AUC24 / MIC"
         )
 
+        // =========================================================
+        // EXPECTED PEAK / CMAX
+        // =========================================================
+        //
+        // The pre-dose concentration is the trough.
+        // The estimated peak is calculated using:
+        //
+        // Cmax = Cmin × e^(Ke × interval)
+        //
+        // =========================================================
+
+        val expectedCmax =
+            if (
+                ke > 0.0 &&
+                interval > 0.0 &&
+                trough > 0.0
+            ) {
+
+                trough *
+                        exp(
+                            ke * interval
+                        )
+
+            } else {
+                null
+            }
+
+        expectedCmax?.let { cmax ->
+
+            steps += CalculationStep(
+                "Expected Peak (Cmax)",
+                "%.2f mg/L".format(cmax),
+                "Cmin × e^(Ke × Dosing Interval)"
+            )
+        }
+
+        // =========================================================
+        // FINAL RESULT
+        // =========================================================
+
         return TDMResult(
             ke = ke,
             halfLifeHr = halfLife,
             vd = vd,
             clearance = clearance,
+
             auc24 = auc24,
             micMgL = mic,
             aucMic = aucMic,
+
             expectedCmin = trough,
+            expectedCmax = expectedCmax,
+
             steps = steps
         )
     }
