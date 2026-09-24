@@ -1,7 +1,12 @@
 package my.edu.aiu.app.tdminsight.ui.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,81 +30,59 @@ fun PostInputForm(
     Column {
         SectionCard {
             Text("Dose Information", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LabeledInputField(
-                label = "Dose",
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
                 value = doseMg,
                 onValueChange = onDoseMgChange,
-                unit = "mg",
-                helperText = "Vancomycin dose administered.",
-                keyboardType = KeyboardType.Decimal,
+                label = { Text("Dose (mg)") },
                 isError = errors.containsKey("doseMg"),
-                errorText = errors["doseMg"]
+                supportingText = { errors["doseMg"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
             )
         }
-
         Spacer(modifier = Modifier.height(10.dp))
-
         SectionCard {
             Text("Dosing Schedule", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LabeledInputField(
-                label = "Dosing Interval",
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
                 value = intervalHr,
                 onValueChange = onIntervalHrChange,
-                unit = "h",
-                helperText = "Time between consecutive doses.",
-                keyboardType = KeyboardType.Decimal,
+                label = { Text("Dosing Interval (hr)") },
                 isError = errors.containsKey("intervalHr"),
-                errorText = errors["intervalHr"]
+                supportingText = { errors["intervalHr"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LabeledInputField(
-                label = "Infusion Duration",
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
                 value = infusionDurationHr,
                 onValueChange = onInfusionDurationHrChange,
-                unit = "h",
-                helperText = "How long the infusion runs for.",
-                keyboardType = KeyboardType.Decimal,
+                label = { Text("Infusion Duration (hr)") },
                 isError = errors.containsKey("infusionDurationHr"),
-                errorText = errors["infusionDurationHr"]
+                supportingText = { errors["infusionDurationHr"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LabeledInputField(
-                label = "Sampling Time",
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
                 value = samplingTimeHr,
                 onValueChange = onSamplingTimeHrChange,
-                unit = "h",
-                helperText = "Time after infusion start when the level was drawn.",
-                keyboardType = KeyboardType.Decimal,
+                label = { Text("Sampling Time After Infusion Start (hr)") },
                 isError = errors.containsKey("samplingTimeHr"),
-                errorText = errors["samplingTimeHr"]
+                supportingText = { errors["samplingTimeHr"]?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
             )
         }
-
         Spacer(modifier = Modifier.height(10.dp))
-
         SectionCard {
-            Text(
-                "Concentration Information",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LabeledInputField(
-                label = "Post-dose (Peak) Concentration",
+            Text("Concentration Information", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(10.dp))
+            ConcentrationInputField(
+                label = "Post-dose (peak) Level (mg/L)",
                 value = postLevelConc,
                 onValueChange = onPostLevelConcChange,
-                unit = "mg/L",
-                helperText = "Measured concentration after dose administration.",
-                keyboardType = KeyboardType.Decimal,
                 isError = errors.containsKey("postLevelConc"),
                 errorText = errors["postLevelConc"]
             )

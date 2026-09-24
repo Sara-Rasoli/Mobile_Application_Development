@@ -25,12 +25,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import my.edu.aiu.app.tdminsight.calculation.TDMCalculationEngine
 import my.edu.aiu.app.tdminsight.data.TDMHistoryRepository
+import my.edu.aiu.app.tdminsight.model.TDMResult
 import my.edu.aiu.app.tdminsight.ui.components.AppFooter
 import my.edu.aiu.app.tdminsight.ui.components.AppHeader
 import my.edu.aiu.app.tdminsight.ui.components.CalculationQualityCheck
+import my.edu.aiu.app.tdminsight.ui.components.ClinicalPlausibilityCard
 import my.edu.aiu.app.tdminsight.ui.components.ConcentrationTimeGraph
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
+import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
 import my.edu.aiu.app.tdminsight.ui.components.SectionCard
 import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
@@ -54,28 +57,22 @@ private fun ResultRow(
 ) {
 
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    vertical = 4.dp
-                ),
-        horizontalArrangement =
-            Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                vertical = 4.dp
+            ),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
 
         Text(
             text = label,
-            style =
-                MaterialTheme.typography
-                    .bodyMedium
+            style = MaterialTheme.typography.bodyMedium
         )
 
         Text(
             text = value,
-            style =
-                MaterialTheme.typography
-                    .titleMedium
+            style = MaterialTheme.typography.titleMedium
         )
     }
 }
@@ -109,33 +106,49 @@ fun ResultsScreen(
     val workflow =
         caseViewModel.selectedWorkflow
 
-    // =============================================================
+    // =========================================================
     // CALCULATE RESULT
-    // =============================================================
+    // =========================================================
 
-    LaunchedEffect(input) {
+    LaunchedEffect(
+        input,
+        patient
+    ) {
 
         if (
             input != null &&
             caseViewModel.tdmResult == null
         ) {
 
-            val result =
-                TDMCalculationEngine()
-                    .calculate(input)
+            val weightKg =
+                patient?.weightKg ?: 70.0
 
-            caseViewModel.updateTdmResult(
-                result
-            )
+            try {
+
+                val result =
+                    TDMCalculationEngine()
+                        .calculate(
+                            input,
+                            weightKg
+                        )
+
+                caseViewModel.updateTdmResult(
+                    result
+                )
+
+            } catch (e: Exception) {
+
+                e.printStackTrace()
+            }
         }
     }
 
     val result =
         caseViewModel.tdmResult
 
-    // =============================================================
+    // =========================================================
     // SAVE COMPLETED CALCULATION
-    // =============================================================
+    // =========================================================
 
     LaunchedEffect(
         patient,
@@ -165,203 +178,195 @@ fun ResultsScreen(
         }
     }
 
-    // =============================================================
+    // =========================================================
     // SCREEN
-    // =============================================================
+    // =========================================================
 
     Column(
-        modifier =
-            Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
+
+        // =====================================================
+        // HEADER
+        // =====================================================
 
         AppHeader(
             navController
         )
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(
-                        rememberScrollState()
-                    )
-                    .padding(20.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(
+                    rememberScrollState()
+                )
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                )
         ) {
 
+            // =================================================
+            // PROGRESS
+            // =================================================
+
             StepProgressBar(
-                TDM_STEPS,
+                steps = TDM_STEPS,
                 currentStepIndex = 5
             )
 
             Spacer(
-                modifier =
-                    Modifier.height(12.dp)
+                modifier = Modifier.height(12.dp)
             )
 
+            // =================================================
+            // TITLE
+            // =================================================
+
             ScreenTitleRow(
-                icon =
-                    Icons.Filled.BarChart,
+                icon = Icons.Filled.BarChart,
                 title = "Results"
             )
 
             Spacer(
-                modifier =
-                    Modifier.height(16.dp)
+                modifier = Modifier.height(16.dp)
             )
 
-            if (
-                result != null &&
-                input != null
-            ) {
+            if (result != null) {
 
                 // =================================================
-                // 1. PHARMACOKINETIC PARAMETERS
+                // CLINICAL PLAUSIBILITY
+                // =================================================
+
+                ClinicalPlausibilityCard(
+                    result = result,
+                    input = input,
+                    patientInfo = patient
+                )
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                // =================================================
+                // PHARMACOKINETIC PARAMETERS
                 // =================================================
 
                 SectionCard {
 
                     Text(
-                        text =
-                            "Pharmacokinetic Parameters",
-                        style =
-                            MaterialTheme.typography
-                                .titleMedium
+                        text = "Pharmacokinetic Parameters",
+                        style = MaterialTheme.typography.titleMedium
                     )
 
                     Spacer(
-                        modifier =
-                            Modifier.height(8.dp)
+                        modifier = Modifier.height(8.dp)
                     )
 
                     ResultRow(
-                        label =
-                            "Elimination Rate (Ke)",
-                        value =
-                            "%.5f /hr"
-                                .format(
-                                    result.ke
-                                )
+                        label = "Elimination Rate (Ke)",
+                        value = "%.5f /hr".format(
+                            result.ke
+                        )
                     )
 
                     ResultRow(
-                        label =
-                            "Half-Life (t½)",
-                        value =
-                            "%.2f hours"
-                                .format(
-                                    result.halfLifeHr
-                                )
+                        label = "Half-Life (t½)",
+                        value = "%.2f hours".format(
+                            result.halfLifeHr
+                        )
                     )
 
                     ResultRow(
-                        label =
-                            "Volume of Distribution",
-                        value =
-                            "%.2f L"
-                                .format(
-                                    result.vd
-                                )
+                        label = "Volume of Distribution",
+                        value = "%.2f L".format(
+                            result.vd
+                        )
                     )
 
                     result.clearance?.let {
 
                         ResultRow(
-                            label =
-                                "Clearance",
-                            value =
-                                "%.2f L/hr"
-                                    .format(it)
+                            label = "Clearance",
+                            value = "%.2f L/hr".format(it)
+                        )
+                    }
+
+                    result.aucTau?.let {
+
+                        ResultRow(
+                            label = "AUC Interval",
+                            value = "%.2f mg•h/L".format(it)
                         )
                     }
                 }
 
                 Spacer(
-                    modifier =
-                        Modifier.height(16.dp)
+                    modifier = Modifier.height(16.dp)
                 )
 
                 // =================================================
-                // 2. EFFICACY PARAMETERS
+                // EFFICACY PARAMETERS
                 // =================================================
 
                 SectionCard {
 
                     Text(
-                        text =
-                            "Efficacy Parameters",
-                        style =
-                            MaterialTheme.typography
-                                .titleMedium
+                        text = "Efficacy Parameters",
+                        style = MaterialTheme.typography.titleMedium
                     )
 
                     Spacer(
-                        modifier =
-                            Modifier.height(8.dp)
+                        modifier = Modifier.height(8.dp)
                     )
 
                     result.auc24?.let {
 
                         ResultRow(
-                            label =
-                                "AUC₂₄",
-                            value =
-                                "%.2f mg•h/L"
-                                    .format(it)
+                            label = "AUC₂₄",
+                            value = "%.2f mg•h/L".format(it)
                         )
                     }
 
                     result.micMgL?.let {
 
                         ResultRow(
-                            label =
-                                "MIC",
-                            value =
-                                "%.2f mg/L"
-                                    .format(it)
+                            label = "MIC",
+                            value = "%.2f mg/L".format(it)
                         )
                     }
 
                     result.aucMic?.let {
 
                         ResultRow(
-                            label =
-                                "AUC/MIC",
-                            value =
-                                "%.2f"
-                                    .format(it)
+                            label = "AUC/MIC",
+                            value = "%.2f".format(it)
                         )
                     }
 
                     result.expectedCmax?.let {
 
                         ResultRow(
-                            label =
-                                "Peak (Cmax)",
-                            value =
-                                "%.2f mg/L"
-                                    .format(it)
+                            label = "Peak (Cmax)",
+                            value = "%.2f mg/L".format(it)
                         )
                     }
 
                     result.expectedCmin?.let {
 
                         ResultRow(
-                            label =
-                                "Trough (Cmin)",
-                            value =
-                                "%.2f mg/L"
-                                    .format(it)
+                            label = "Trough (Cmin)",
+                            value = "%.2f mg/L".format(it)
                         )
                     }
                 }
 
                 Spacer(
-                    modifier =
-                        Modifier.height(16.dp)
+                    modifier = Modifier.height(16.dp)
                 )
 
                 // =================================================
-                // 3. CONCENTRATION-TIME GRAPH
+                // CONCENTRATION-TIME GRAPH
                 // =================================================
 
                 SectionCard {
@@ -369,70 +374,90 @@ fun ResultsScreen(
                     ConcentrationTimeGraph(
                         input = input,
                         result = result,
-                        modifier =
-                            Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 
                 Spacer(
-                    modifier =
-                        Modifier.height(16.dp)
+                    modifier = Modifier.height(16.dp)
                 )
 
                 // =================================================
-                // 4. CALCULATION QUALITY CHECK
+                // CALCULATION QUALITY CHECK
                 // =================================================
 
                 CalculationQualityCheck(
                     input = input,
                     result = result,
-                    modifier =
-                        Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(
-                    modifier =
-                        Modifier.height(16.dp)
+                    modifier = Modifier.height(16.dp)
                 )
 
                 // =================================================
-                // 5. EXPLANATION
+                // DOSING / EXPLANATION
                 // =================================================
 
-                PrimaryAppButton(
-                    text =
-                        "View Step-by-Step Explanation",
-                    modifier =
-                        Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
 
-                    navController.navigate(
-                        AppRoutes
-                            .CALCULATION_EXPLANATION
-                    )
+                    SecondaryAppButton(
+                        text = "Explore Dosing",
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        navController.navigate(
+                            AppRoutes.EXPLORE_DOSING
+                        )
+                    }
+
+                    PrimaryAppButton(
+                        text = "View Explanation",
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        navController.navigate(
+                            AppRoutes.CALCULATION_EXPLANATION
+                        )
+                    }
                 }
 
             } else {
 
-                Text(
-                    text =
-                        "No calculation result found. Please go back and complete the calculation.",
-                    style =
-                        MaterialTheme.typography
-                            .bodyMedium
-                )
+                // =================================================
+                // NO RESULT
+                // =================================================
+
+                SectionCard {
+
+                    Text(
+                        text = "No calculation result found.",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text = "Please go back and complete the calculation.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
 
             Spacer(
-                modifier =
-                    Modifier.height(20.dp)
+                modifier = Modifier.height(20.dp)
             )
 
             AppFooter()
 
             Spacer(
-                modifier =
-                    Modifier.height(8.dp)
+                modifier = Modifier.height(8.dp)
             )
         }
     }

@@ -9,4 +9,5 @@ object AppRoutes {
     const val RESULTS = "results"
     const val CALCULATION_EXPLANATION = "calculation_explanation"
     const val CALCULATION_HISTORY = "calculation_history"
+    const val EXPLORE_DOSING = "explore_dosing"
 }

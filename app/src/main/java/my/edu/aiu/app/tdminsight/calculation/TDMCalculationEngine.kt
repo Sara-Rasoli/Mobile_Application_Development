@@ -9,10 +9,10 @@ class TDMCalculationEngine {
     private val postCalculator = PostCalculator()
     private val prePostCalculator = PrePostCalculator()
 
-    fun calculate(input: TDMInput): TDMResult {
+    fun calculate(input: TDMInput, weightKg: Double = 70.0): TDMResult {
         return when (input) {
-            is TDMInput.Pre -> preCalculator.calculate(input)
-            is TDMInput.Post -> postCalculator.calculate(input)
+            is TDMInput.Pre -> preCalculator.calculate(input, weightKg = weightKg)
+            is TDMInput.Post -> postCalculator.calculate(input, weightKg = weightKg)
             is TDMInput.PrePost -> prePostCalculator.calculate(input)
         }
     }

@@ -5,6 +5,7 @@ data class TDMResult(
     val halfLifeHr: Double,
     val vd: Double,
     val clearance: Double? = null,
+    val aucTau: Double? = null,
     val auc24: Double? = null,
     val micMgL: Double? = null,
     val aucMic: Double? = null,
