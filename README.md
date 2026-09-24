@@ -4,7 +4,7 @@ CDE2313 Mobile Application Development group project.
 # Group Members:
 1. Sara Rasoli  AIU24102345
 2. Eshraga Adil Yousif Alsmani  AIU24102071
-3. Hasib ur Rahman  AIU24102129
+3. MD Hasibur Rahman  AIU24102129
 # TDM Insight 📱
 
 **TDM Insight** is an Android mobile application designed to assist medical and pharmaceutical professionals with Therapeutic Drug Monitoring (TDM) calculations, dosing adjustments, and pharmacokinetic evaluation.
