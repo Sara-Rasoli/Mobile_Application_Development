@@ -32,6 +32,7 @@ import my.edu.aiu.app.tdminsight.model.TDMInput
 import my.edu.aiu.app.tdminsight.model.TDMResult
 import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -42,12 +43,21 @@ private data class GraphPoint(
     val measured: Boolean = false
 )
 
+private data class SelectedGraphPoint(
+    val time: Double,
+    val concentration: Double
+)
+
 @Composable
 fun ConcentrationTimeGraph(
     input: TDMInput,
     result: TDMResult,
     modifier: Modifier = Modifier
 ) {
+
+    // ---------------------------------------------------------
+    // CREATE GRAPH DATA
+    // ---------------------------------------------------------
 
     val points = remember(input, result) {
         createGraphPoints(
@@ -57,11 +67,13 @@ fun ConcentrationTimeGraph(
     }
 
     if (points.isEmpty()) {
+
         Surface(
             modifier = modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
+
             Text(
                 text = "No concentration-time data available.",
                 modifier = Modifier.padding(16.dp),
@@ -72,17 +84,36 @@ fun ConcentrationTimeGraph(
         return
     }
 
-    val maxTime = points
-        .maxOf { it.time }
-        .coerceAtLeast(1.0)
+    // ---------------------------------------------------------
+    // GRAPH LIMITS
+    // ---------------------------------------------------------
 
-    val maxConcentration = points
-        .maxOf { it.concentration }
-        .coerceAtLeast(1.0)
+    val maxTime =
+        points
+            .maxOf { it.time }
+            .coerceAtLeast(1.0)
 
-    var selectedPointIndex by remember(input, result) {
-        mutableStateOf<Int?>(null)
+    val maxConcentration =
+        points
+            .maxOf { it.concentration }
+            .coerceAtLeast(1.0)
+
+    // ---------------------------------------------------------
+    // EXACT SELECTED POINT
+    //
+    // This is NOT an index anymore.
+    //
+    // It stores the exact time and concentration where
+    // the user tapped.
+    // ---------------------------------------------------------
+
+    var selectedPoint by remember(input, result) {
+        mutableStateOf<SelectedGraphPoint?>(null)
     }
+
+    // ---------------------------------------------------------
+    // COLORS
+    // ---------------------------------------------------------
 
     val primaryColor =
         MaterialTheme.colorScheme.primary
@@ -100,9 +131,9 @@ fun ConcentrationTimeGraph(
         modifier = modifier.fillMaxWidth()
     ) {
 
-        // ---------------------------------------------------------
+        // =====================================================
         // TITLE
-        // ---------------------------------------------------------
+        // =====================================================
 
         Text(
             text = "Concentration-Time Profile",
@@ -114,18 +145,20 @@ fun ConcentrationTimeGraph(
         )
 
         Text(
-            text = "Tap anywhere on the graph to inspect the nearest concentration point.",
+            text =
+                "Tap anywhere on the graph to view the exact time and concentration.",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color =
+                MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(
             modifier = Modifier.height(12.dp)
         )
 
-        // ---------------------------------------------------------
-        // GRAPH CONTAINER
-        // ---------------------------------------------------------
+        // =====================================================
+        // GRAPH
+        // =====================================================
 
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -136,26 +169,31 @@ fun ConcentrationTimeGraph(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp)
+                    .height(290.dp)
                     .padding(12.dp)
             ) {
 
                 Canvas(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
+                        .height(255.dp)
+
+                        // -------------------------------------
+                        // TAP HANDLER
+                        // -------------------------------------
+
                         .pointerInput(
                             points,
                             maxTime,
-                            maxConcentration
+                            maxConcentration,
+                            result.ke
                         ) {
 
                             detectTapGestures { tapOffset ->
 
-                                val index =
-                                    findNearestPointByTap(
+                                val selectedTime =
+                                    timeFromTap(
                                         tapOffset = tapOffset,
-                                        points = points,
                                         maxTime = maxTime,
                                         canvasWidth =
                                             size.width.toFloat(),
@@ -163,7 +201,26 @@ fun ConcentrationTimeGraph(
                                             size.height.toFloat()
                                     )
 
-                                selectedPointIndex = index
+                                if (selectedTime != null) {
+
+                                    val concentration =
+                                        concentrationAtTime(
+                                            time =
+                                                selectedTime,
+                                            points =
+                                                points,
+                                            ke =
+                                                result.ke
+                                        )
+
+                                    selectedPoint =
+                                        SelectedGraphPoint(
+                                            time =
+                                                selectedTime,
+                                            concentration =
+                                                concentration
+                                        )
+                                }
                             }
                         }
                 ) {
@@ -190,9 +247,9 @@ fun ConcentrationTimeGraph(
                         return@Canvas
                     }
 
-                    // -------------------------------------------------
+                    // =================================================
                     // POSITION FUNCTIONS
-                    // -------------------------------------------------
+                    // =================================================
 
                     fun xPosition(
                         time: Double
@@ -218,17 +275,17 @@ fun ConcentrationTimeGraph(
                                 graphHeight
                     }
 
-                    // -------------------------------------------------
+                    // =================================================
                     // GRID
-                    // -------------------------------------------------
+                    // =================================================
 
-                    val gridLineCount = 4
+                    val gridLines = 4
 
-                    for (i in 0..gridLineCount) {
+                    for (i in 0..gridLines) {
 
                         val ratio =
                             i.toFloat() /
-                                    gridLineCount
+                                    gridLines
 
                         val y =
                             topPadding +
@@ -238,62 +295,68 @@ fun ConcentrationTimeGraph(
                         drawLine(
                             color =
                                 outlineColor.copy(
-                                    alpha = 0.35f
+                                    alpha = 0.30f
                                 ),
-                            start = Offset(
-                                leftPadding,
-                                y
-                            ),
-                            end = Offset(
-                                leftPadding +
-                                        graphWidth,
-                                y
-                            ),
+                            start =
+                                Offset(
+                                    leftPadding,
+                                    y
+                                ),
+                            end =
+                                Offset(
+                                    leftPadding +
+                                            graphWidth,
+                                    y
+                                ),
                             strokeWidth = 1f
                         )
                     }
 
-                    // -------------------------------------------------
+                    // =================================================
                     // Y AXIS
-                    // -------------------------------------------------
+                    // =================================================
 
                     drawLine(
                         color = outlineColor,
-                        start = Offset(
-                            leftPadding,
-                            topPadding
-                        ),
-                        end = Offset(
-                            leftPadding,
-                            topPadding +
-                                    graphHeight
-                        ),
+                        start =
+                            Offset(
+                                leftPadding,
+                                topPadding
+                            ),
+                        end =
+                            Offset(
+                                leftPadding,
+                                topPadding +
+                                        graphHeight
+                            ),
                         strokeWidth = 2f
                     )
 
-                    // -------------------------------------------------
+                    // =================================================
                     // X AXIS
-                    // -------------------------------------------------
+                    // =================================================
 
                     drawLine(
                         color = outlineColor,
-                        start = Offset(
-                            leftPadding,
-                            topPadding +
-                                    graphHeight
-                        ),
-                        end = Offset(
-                            leftPadding +
-                                    graphWidth,
-                            topPadding +
-                                    graphHeight
-                        ),
+                        start =
+                            Offset(
+                                leftPadding,
+                                topPadding +
+                                        graphHeight
+                            ),
+                        end =
+                            Offset(
+                                leftPadding +
+                                        graphWidth,
+                                topPadding +
+                                        graphHeight
+                            ),
                         strokeWidth = 2f
                     )
 
-                    // -------------------------------------------------
+                    // =================================================
                     // X AXIS TICKS
-                    // -------------------------------------------------
+                    // =================================================
 
                     for (i in 0..5) {
 
@@ -307,28 +370,37 @@ fun ConcentrationTimeGraph(
 
                         drawLine(
                             color = outlineColor,
-                            start = Offset(
-                                x,
-                                topPadding +
-                                        graphHeight
-                            ),
-                            end = Offset(
-                                x,
-                                topPadding +
-                                        graphHeight +
-                                        5f
-                            ),
+                            start =
+                                Offset(
+                                    x,
+                                    topPadding +
+                                            graphHeight
+                                ),
+                            end =
+                                Offset(
+                                    x,
+                                    topPadding +
+                                            graphHeight +
+                                            5f
+                                ),
                             strokeWidth = 1f
                         )
                     }
 
-                    // -------------------------------------------------
+                    // =================================================
                     // CONCENTRATION CURVE
-                    // -------------------------------------------------
+                    // =================================================
+                    //
+                    // We draw many small points instead of only
+                    // connecting the two measured points.
+                    //
+                    // This creates a smooth concentration-time curve.
+                    // =================================================
 
-                    val curvePath = Path()
+                    val curvePath =
+                        Path()
 
-                    val sampleCount = 100
+                    val sampleCount = 150
 
                     for (i in 0..sampleCount) {
 
@@ -339,9 +411,12 @@ fun ConcentrationTimeGraph(
 
                         val concentration =
                             concentrationAtTime(
-                                time = time,
-                                points = points,
-                                ke = result.ke
+                                time =
+                                    time,
+                                points =
+                                    points,
+                                ke =
+                                    result.ke
                             )
 
                         val x =
@@ -354,11 +429,14 @@ fun ConcentrationTimeGraph(
                             )
 
                         if (i == 0) {
+
                             curvePath.moveTo(
                                 x,
                                 y
                             )
+
                         } else {
+
                             curvePath.lineTo(
                                 x,
                                 y
@@ -369,17 +447,18 @@ fun ConcentrationTimeGraph(
                     drawPath(
                         path = curvePath,
                         color = primaryColor,
-                        style = Stroke(
-                            width = 5f,
-                            cap = StrokeCap.Round
-                        )
+                        style =
+                            Stroke(
+                                width = 5f,
+                                cap = StrokeCap.Round
+                            )
                     )
 
-                    // -------------------------------------------------
-                    // DATA POINTS
-                    // -------------------------------------------------
+                    // =================================================
+                    // ORIGINAL MEASURED / REFERENCE POINTS
+                    // =================================================
 
-                    points.forEachIndexed { index, point ->
+                    points.forEach { point ->
 
                         val x =
                             xPosition(
@@ -391,12 +470,6 @@ fun ConcentrationTimeGraph(
                                 point.concentration
                             )
 
-                        val isSelected =
-                            selectedPointIndex ==
-                                    index
-
-                        // Main point
-
                         drawCircle(
                             color =
                                 if (point.measured) {
@@ -404,102 +477,121 @@ fun ConcentrationTimeGraph(
                                 } else {
                                     primaryColor
                                 },
-                            radius =
-                                if (isSelected) {
-                                    8f
-                                } else {
-                                    6f
-                                },
-                            center = Offset(
-                                x,
-                                y
-                            )
-                        )
-
-                        // Selection ring
-
-                        if (isSelected) {
-
-                            drawCircle(
-                                color = selectedColor,
-                                radius = 12f,
-                                center = Offset(
+                            radius = 6f,
+                            center =
+                                Offset(
                                     x,
                                     y
-                                ),
-                                style = Stroke(
-                                    width = 3f
                                 )
-                            )
-                        }
+                        )
                     }
 
-                    // -------------------------------------------------
-                    // SELECTED POINT GUIDE LINES
-                    // -------------------------------------------------
+                    // =================================================
+                    // SELECTED EXACT POINT
+                    // =================================================
+                    //
+                    // This is the important part.
+                    //
+                    // The marker is placed at the EXACT time the
+                    // user tapped, not at 0 hr or the next measured
+                    // point.
+                    // =================================================
 
-                    selectedPointIndex?.let { index ->
+                    selectedPoint?.let { selected ->
 
-                        if (index in points.indices) {
+                        val x =
+                            xPosition(
+                                selected.time
+                            )
 
-                            val selectedPoint =
-                                points[index]
+                        val y =
+                            yPosition(
+                                selected.concentration
+                            )
 
-                            val x =
-                                xPosition(
-                                    selectedPoint.time
-                                )
+                        // ---------------------------------------------
+                        // VERTICAL GUIDE
+                        // ---------------------------------------------
 
-                            val y =
-                                yPosition(
-                                    selectedPoint
-                                        .concentration
-                                )
-
-                            // Vertical guide
-
-                            drawLine(
-                                color =
-                                    selectedColor.copy(
-                                        alpha = 0.35f
-                                    ),
-                                start = Offset(
+                        drawLine(
+                            color =
+                                selectedColor.copy(
+                                    alpha = 0.45f
+                                ),
+                            start =
+                                Offset(
                                     x,
                                     topPadding
                                 ),
-                                end = Offset(
+                            end =
+                                Offset(
                                     x,
                                     topPadding +
                                             graphHeight
                                 ),
-                                strokeWidth = 2f
-                            )
+                            strokeWidth = 2f
+                        )
 
-                            // Horizontal guide
+                        // ---------------------------------------------
+                        // HORIZONTAL GUIDE
+                        // ---------------------------------------------
 
-                            drawLine(
-                                color =
-                                    selectedColor.copy(
-                                        alpha = 0.35f
-                                    ),
-                                start = Offset(
+                        drawLine(
+                            color =
+                                selectedColor.copy(
+                                    alpha = 0.35f
+                                ),
+                            start =
+                                Offset(
                                     leftPadding,
                                     y
                                 ),
-                                end = Offset(
+                            end =
+                                Offset(
                                     leftPadding +
                                             graphWidth,
                                     y
                                 ),
-                                strokeWidth = 2f
-                            )
-                        }
+                            strokeWidth = 2f
+                        )
+
+                        // ---------------------------------------------
+                        // OUTER CIRCLE
+                        // ---------------------------------------------
+
+                        drawCircle(
+                            color = selectedColor,
+                            radius = 10f,
+                            center =
+                                Offset(
+                                    x,
+                                    y
+                                ),
+                            style =
+                                Stroke(
+                                    width = 3f
+                                )
+                        )
+
+                        // ---------------------------------------------
+                        // INNER CIRCLE
+                        // ---------------------------------------------
+
+                        drawCircle(
+                            color = primaryColor,
+                            radius = 6f,
+                            center =
+                                Offset(
+                                    x,
+                                    y
+                                )
+                        )
                     }
                 }
 
-                // -------------------------------------------------
-                // Y AXIS TITLE
-                // -------------------------------------------------
+                // =====================================================
+                // Y AXIS LABEL
+                // =====================================================
 
                 Text(
                     text = "Concentration (mg/L)",
@@ -508,14 +600,19 @@ fun ConcentrationTimeGraph(
                     color =
                         MaterialTheme.colorScheme
                             .onSurfaceVariant,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = 2.dp)
+                    modifier =
+                        Modifier
+                            .align(
+                                Alignment.TopStart
+                            )
+                            .padding(
+                                start = 2.dp
+                            )
                 )
 
-                // -------------------------------------------------
-                // X AXIS TITLE
-                // -------------------------------------------------
+                // =====================================================
+                // X AXIS LABEL
+                // =====================================================
 
                 Text(
                     text = "Time (hr)",
@@ -524,28 +621,30 @@ fun ConcentrationTimeGraph(
                     color =
                         MaterialTheme.colorScheme
                             .onSurfaceVariant,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 4.dp)
+                    modifier =
+                        Modifier
+                            .align(
+                                Alignment.BottomEnd
+                            )
+                            .padding(
+                                end = 4.dp
+                            )
                 )
             }
         }
 
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
-
-        // ---------------------------------------------------------
-        // X AXIS LABELS
-        // ---------------------------------------------------------
+        // =============================================================
+        // X AXIS VALUES
+        // =============================================================
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = 52.dp,
-                    end = 18.dp
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 52.dp,
+                        end = 18.dp
+                    ),
             horizontalArrangement =
                 Arrangement.SpaceBetween
         ) {
@@ -557,22 +656,24 @@ fun ConcentrationTimeGraph(
             )
 
             Text(
-                text = formatNumber(maxTime),
+                text =
+                    formatNumber(maxTime),
                 style =
                     MaterialTheme.typography.labelSmall
             )
         }
 
         Spacer(
-            modifier = Modifier.height(4.dp)
+            modifier = Modifier.height(8.dp)
         )
 
-        // ---------------------------------------------------------
+        // =============================================================
         // LEGEND
-        // ---------------------------------------------------------
+        // =============================================================
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier.fillMaxWidth(),
             horizontalArrangement =
                 Arrangement.spacedBy(18.dp),
             verticalAlignment =
@@ -590,113 +691,100 @@ fun ConcentrationTimeGraph(
             )
         }
 
-        // ---------------------------------------------------------
-        // SELECTED POINT DETAILS
-        // ---------------------------------------------------------
+        // =============================================================
+        // SELECTED POINT INFORMATION
+        // =============================================================
 
-        selectedPointIndex?.let { index ->
+        selectedPoint?.let { selected ->
 
-            if (index in points.indices) {
+            Spacer(
+                modifier =
+                    Modifier.height(12.dp)
+            )
 
-                val selectedPoint =
-                    points[index]
+            Surface(
+                modifier =
+                    Modifier.fillMaxWidth(),
+                shape =
+                    RoundedCornerShape(10.dp),
+                color =
+                    MaterialTheme.colorScheme
+                        .secondaryContainer
+            ) {
 
-                Spacer(
-                    modifier = Modifier.height(12.dp)
-                )
-
-                Surface(
+                Column(
                     modifier =
-                        Modifier.fillMaxWidth(),
-                    shape =
-                        RoundedCornerShape(10.dp),
-                    color =
-                        MaterialTheme.colorScheme
-                            .secondaryContainer
+                        Modifier.padding(14.dp)
                 ) {
 
-                    Column(
+                    Text(
+                        text = "Selected Point",
+                        style =
+                            MaterialTheme.typography
+                                .titleSmall
+                    )
+
+                    Spacer(
                         modifier =
-                            Modifier.padding(14.dp)
-                    ) {
+                            Modifier.height(8.dp)
+                    )
 
-                        Text(
-                            text =
-                                selectedPoint.label,
-                            style =
-                                MaterialTheme.typography
-                                    .titleSmall
-                        )
+                    Text(
+                        text =
+                            "Time: ${
+                                formatNumber(
+                                    selected.time
+                                )
+                            } hr",
+                        style =
+                            MaterialTheme.typography
+                                .bodyLarge
+                    )
 
-                        Spacer(
-                            modifier =
-                                Modifier.height(6.dp)
-                        )
+                    Text(
+                        text =
+                            "Concentration: ${
+                                formatNumber(
+                                    selected.concentration
+                                )
+                            } mg/L",
+                        style =
+                            MaterialTheme.typography
+                                .bodyLarge
+                    )
 
-                        Text(
-                            text =
-                                "Time: ${
-                                    formatNumber(
-                                        selectedPoint.time
-                                    )
-                                } hr",
-                            style =
-                                MaterialTheme.typography
-                                    .bodyMedium
-                        )
+                    Spacer(
+                        modifier =
+                            Modifier.height(4.dp)
+                    )
 
-                        Text(
-                            text =
-                                "Concentration: ${
-                                    formatNumber(
-                                        selectedPoint
-                                            .concentration
-                                    )
-                                } mg/L",
-                            style =
-                                MaterialTheme.typography
-                                    .bodyMedium
-                        )
+                    Text(
+                        text =
+                            "Calculated at the selected time",
+                        style =
+                            MaterialTheme.typography
+                                .bodySmall,
+                        color =
+                            MaterialTheme.colorScheme
+                                .onSurfaceVariant
+                    )
 
-                        Spacer(
-                            modifier =
-                                Modifier.height(4.dp)
-                        )
+                    Spacer(
+                        modifier =
+                            Modifier.height(4.dp)
+                    )
 
-                        Text(
-                            text =
-                                if (
-                                    selectedPoint.measured
-                                ) {
-                                    "Measured level"
-                                } else {
-                                    "Calculated profile"
-                                },
-                            style =
-                                MaterialTheme.typography
-                                    .bodySmall,
-                            color =
-                                MaterialTheme.colorScheme
-                                    .onSurfaceVariant
-                        )
-
-                        Spacer(
-                            modifier =
-                                Modifier.height(4.dp)
-                        )
-
-                        Text(
-                            text =
-                                "Ke: ${
-                                    formatNumber(
-                                        result.ke
-                                    )
-                                } /hr",
-                            style =
-                                MaterialTheme.typography
-                                    .bodySmall
-                        )
-                    }
+                    Text(
+                        text =
+                            "Ke: ${
+                                formatNumber(
+                                    result.ke
+                                )
+                            } /hr",
+                        style =
+                            MaterialTheme.typography
+                                .bodySmall
+                    )
                 }
             }
         }
@@ -719,18 +807,20 @@ private fun LegendItem(
     ) {
 
         Canvas(
-            modifier = Modifier
-                .padding(end = 6.dp)
-                .height(10.dp)
+            modifier =
+                Modifier
+                    .padding(end = 6.dp)
+                    .height(10.dp)
         ) {
 
             drawCircle(
                 color = color,
                 radius = 5f,
-                center = Offset(
-                    5f,
-                    size.height / 2f
-                )
+                center =
+                    Offset(
+                        5f,
+                        size.height / 2f
+                    )
             )
         }
 
@@ -753,9 +843,9 @@ private fun createGraphPoints(
 
     return when (input) {
 
-        // ---------------------------------------------------------
-        // PRE-DOSE WORKFLOW
-        // ---------------------------------------------------------
+        // =============================================================
+        // PRE
+        // =============================================================
 
         is TDMInput.Pre -> {
 
@@ -774,8 +864,10 @@ private fun createGraphPoints(
                             it > 0.0
                         }
                         ?: calculatePeakFromTrough(
-                            trough = trough,
-                            ke = result.ke,
+                            trough =
+                                trough,
+                            ke =
+                                result.ke,
                             interval =
                                 input.intervalHr
                         )
@@ -807,9 +899,9 @@ private fun createGraphPoints(
             }
         }
 
-        // ---------------------------------------------------------
-        // POST-DOSE WORKFLOW
-        // ---------------------------------------------------------
+        // =============================================================
+        // POST
+        // =============================================================
 
         is TDMInput.Post -> {
 
@@ -832,10 +924,12 @@ private fun createGraphPoints(
                         samplingTime + 1.0
                     )
 
-                val referencePoint =
+                val measuredPoint =
                     GraphPoint(
-                        time = samplingTime,
-                        concentration = peak,
+                        time =
+                            samplingTime,
+                        concentration =
+                            peak,
                         label =
                             "Measured post-dose level",
                         measured = true
@@ -847,9 +941,10 @@ private fun createGraphPoints(
                             input.intervalHr,
                         points =
                             listOf(
-                                referencePoint
+                                measuredPoint
                             ),
-                        ke = result.ke
+                        ke =
+                            result.ke
                     )
 
                 listOf(
@@ -867,7 +962,7 @@ private fun createGraphPoints(
                         measured = false
                     ),
 
-                    referencePoint,
+                    measuredPoint,
 
                     GraphPoint(
                         time = endTime,
@@ -884,9 +979,9 @@ private fun createGraphPoints(
             }
         }
 
-        // ---------------------------------------------------------
-        // PRE + POST WORKFLOW
-        // ---------------------------------------------------------
+        // =============================================================
+        // PRE + POST
+        // =============================================================
 
         is TDMInput.PrePost -> {
 
@@ -913,7 +1008,8 @@ private fun createGraphPoints(
 
                     GraphPoint(
                         time = 0.0,
-                        concentration = peak,
+                        concentration =
+                            peak,
                         label =
                             "Measured post-dose level",
                         measured = true
@@ -921,7 +1017,8 @@ private fun createGraphPoints(
 
                     GraphPoint(
                         time = gap,
-                        concentration = trough,
+                        concentration =
+                            trough,
                         label =
                             "Measured pre-dose level",
                         measured = true
@@ -957,7 +1054,14 @@ private fun calculatePeakFromTrough(
 }
 
 // ============================================================================
-// CALCULATE CONCENTRATION AT A SPECIFIC TIME
+// CONCENTRATION AT EXACT TIME
+// ============================================================================
+//
+// This function is used both:
+// 1. To draw the curve.
+// 2. To calculate the value when the user taps.
+//
+// Therefore the displayed selected value corresponds to the curve.
 // ============================================================================
 
 private fun concentrationAtTime(
@@ -970,53 +1074,169 @@ private fun concentrationAtTime(
         return 0.0
     }
 
-    val reference =
+    // -------------------------------------------------------------
+    // BEFORE FIRST POINT
+    // -------------------------------------------------------------
+
+    val firstPoint =
         points.minByOrNull {
-            abs(
-                it.time - time
-            )
+            it.time
         } ?: return 0.0
 
-    val deltaTime =
-        time - reference.time
+    if (time <= firstPoint.time) {
 
-    return if (ke > 0.0) {
+        return if (ke > 0.0) {
 
-        reference.concentration *
-                exp(
-                    -ke * deltaTime
-                )
+            firstPoint.concentration *
+                    exp(
+                        -ke *
+                                (
+                                        time -
+                                                firstPoint.time
+                                        )
+                    )
 
-    } else {
+        } else {
 
-        reference.concentration
-    }.coerceAtLeast(0.0)
+            firstPoint.concentration
+        }.coerceAtLeast(0.0)
+    }
+
+    // -------------------------------------------------------------
+    // AFTER LAST POINT
+    // -------------------------------------------------------------
+
+    val lastPoint =
+        points.maxByOrNull {
+            it.time
+        } ?: return 0.0
+
+    if (time >= lastPoint.time) {
+
+        return if (ke > 0.0) {
+
+            lastPoint.concentration *
+                    exp(
+                        -ke *
+                                (
+                                        time -
+                                                lastPoint.time
+                                        )
+                    )
+
+        } else {
+
+            lastPoint.concentration
+        }.coerceAtLeast(0.0)
+    }
+
+    // -------------------------------------------------------------
+    // FIND THE TWO POINTS AROUND THE SELECTED TIME
+    // -------------------------------------------------------------
+
+    val sorted =
+        points.sortedBy {
+            it.time
+        }
+
+    for (i in 0 until sorted.lastIndex) {
+
+        val left =
+            sorted[i]
+
+        val right =
+            sorted[i + 1]
+
+        if (
+            time >= left.time &&
+            time <= right.time
+        ) {
+
+            // -----------------------------------------------------
+            // EXPONENTIAL INTERPOLATION
+            //
+            // This keeps the concentration-time relationship
+            // smooth between the two known points.
+            // -----------------------------------------------------
+
+            if (
+                left.concentration > 0.0 &&
+                right.concentration > 0.0 &&
+                right.time > left.time
+            ) {
+
+                val fraction =
+                    (
+                            time -
+                                    left.time
+                            ) /
+                            (
+                                    right.time -
+                                            left.time
+                                    )
+
+                val logLeft =
+                    ln(
+                        left.concentration
+                    )
+
+                val logRight =
+                    ln(
+                        right.concentration
+                    )
+
+                val interpolatedLog =
+                    logLeft +
+                            fraction *
+                            (
+                                    logRight -
+                                            logLeft
+                                    )
+
+                return exp(
+                    interpolatedLog
+                ).coerceAtLeast(0.0)
+            }
+
+            // -----------------------------------------------------
+            // FALLBACK LINEAR INTERPOLATION
+            // -----------------------------------------------------
+
+            val fraction =
+                (
+                        time -
+                                left.time
+                        ) /
+                        (
+                                right.time -
+                                        left.time
+                                )
+
+            return (
+                    left.concentration +
+                            fraction *
+                            (
+                                    right.concentration -
+                                            left.concentration
+                                    )
+                    ).coerceAtLeast(0.0)
+        }
+    }
+
+    return lastPoint.concentration
+        .coerceAtLeast(0.0)
 }
 
 // ============================================================================
-// FIND POINT FROM TAP
-// ============================================================================
-//
-// This is the important fix.
-//
-// The previous version required the user to tap within 45 pixels of an
-// existing point.
-//
-// Now we use the X position of the tap to determine the selected time.
-// Therefore, the user can tap anywhere inside the graph.
+// CONVERT TAP POSITION TO EXACT TIME
 // ============================================================================
 
-private fun findNearestPointByTap(
+private fun timeFromTap(
     tapOffset: Offset,
-    points: List<GraphPoint>,
     maxTime: Double,
     canvasWidth: Float,
     canvasHeight: Float
-): Int? {
-
-    if (points.isEmpty()) {
-        return null
-    }
+): Double? {
 
     val leftPadding = 52f
     val rightPadding = 18f
@@ -1041,7 +1261,7 @@ private fun findNearestPointByTap(
     }
 
     // -------------------------------------------------------------
-    // ONLY RESPOND TO TAPS INSIDE THE GRAPH
+    // MAKE SURE TAP IS INSIDE GRAPH
     // -------------------------------------------------------------
 
     if (
@@ -1056,55 +1276,25 @@ private fun findNearestPointByTap(
     }
 
     // -------------------------------------------------------------
-    // CONVERT TAP X POSITION INTO TIME
+    // CONVERT X POSITION TO EXACT TIME
     // -------------------------------------------------------------
 
-    val selectedTime =
+    val ratio =
         (
-                (
-                        tapOffset.x -
-                                leftPadding
-                        ) / graphWidth
-                )
-            .coerceIn(0f, 1f)
-            .toDouble() *
-                maxTime
+                tapOffset.x -
+                        leftPadding
+                ) /
+                graphWidth
 
-    // -------------------------------------------------------------
-    // FIND THE EXISTING POINT WITH THE CLOSEST TIME
-    // -------------------------------------------------------------
-
-    var closestIndex: Int? = null
-
-    var closestDistance =
-        Double.MAX_VALUE
-
-    points.forEachIndexed { index, point ->
-
-        val distance =
-            abs(
-                point.time -
-                        selectedTime
+    return (
+            ratio.coerceIn(0f, 1f)
+                .toDouble() *
+                    maxTime
             )
-
-        if (
-            distance <
-            closestDistance
-        ) {
-
-            closestDistance =
-                distance
-
-            closestIndex =
-                index
-        }
-    }
-
-    return closestIndex
 }
 
 // ============================================================================
-// FORMAT NUMBERS
+// FORMAT NUMBER
 // ============================================================================
 
 private fun formatNumber(

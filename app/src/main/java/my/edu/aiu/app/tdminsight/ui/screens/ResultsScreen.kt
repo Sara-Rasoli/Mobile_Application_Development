@@ -10,87 +10,455 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import my.edu.aiu.app.tdminsight.calculation.TDMCalculationEngine
+import my.edu.aiu.app.tdminsight.data.TDMHistoryRepository
+import my.edu.aiu.app.tdminsight.model.TDMResult
+import my.edu.aiu.app.tdminsight.ui.components.AppFooter
+import my.edu.aiu.app.tdminsight.ui.components.AppHeader
+import my.edu.aiu.app.tdminsight.ui.components.CalculationQualityCheck
 import my.edu.aiu.app.tdminsight.ui.components.ClinicalPlausibilityCard
+import my.edu.aiu.app.tdminsight.ui.components.ConcentrationTimeGraph
 import my.edu.aiu.app.tdminsight.ui.components.PrimaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.ScreenTitleRow
 import my.edu.aiu.app.tdminsight.ui.components.SecondaryAppButton
+import my.edu.aiu.app.tdminsight.ui.components.SectionCard
+import my.edu.aiu.app.tdminsight.ui.components.StepProgressBar
 import my.edu.aiu.app.tdminsight.ui.navigation.AppRoutes
 import my.edu.aiu.app.tdminsight.ui.navigation.rememberSharedCaseViewModel
 
-@Composable
-fun ResultsScreen(navController: NavController) {
-    val caseViewModel = rememberSharedCaseViewModel(navController)
-    val input = caseViewModel.tdmInput
-    val patientInfo = caseViewModel.patientInfo
+private val TDM_STEPS =
+    listOf(
+        "Home",
+        "Patient",
+        "Workflow",
+        "Inputs",
+        "Review",
+        "Results",
+        "Explanation"
+    )
 
-    LaunchedEffect(input, patientInfo) {
-        if (input != null && caseViewModel.tdmResult == null) {
-            val weightKg = patientInfo?.weightKg ?: 70.0
-            val result = TDMCalculationEngine().calculate(input, weightKg)
-            caseViewModel.updateTdmResult(result)
+@Composable
+private fun ResultRow(
+    label: String,
+    value: String
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                vertical = 4.dp
+            ),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
+
+@Composable
+fun ResultsScreen(
+    navController: NavController
+) {
+
+    val caseViewModel =
+        rememberSharedCaseViewModel(
+            navController
+        )
+
+    val context =
+        LocalContext.current
+
+    val historyRepository =
+        remember(context) {
+            TDMHistoryRepository(
+                context
+            )
+        }
+
+    val input =
+        caseViewModel.tdmInput
+
+    val patient =
+        caseViewModel.patientInfo
+
+    val workflow =
+        caseViewModel.selectedWorkflow
+
+    // =========================================================
+    // CALCULATE RESULT
+    // =========================================================
+
+    LaunchedEffect(
+        input,
+        patient
+    ) {
+
+        if (
+            input != null &&
+            caseViewModel.tdmResult == null
+        ) {
+
+            val weightKg =
+                patient?.weightKg ?: 70.0
+
+            try {
+
+                val result =
+                    TDMCalculationEngine()
+                        .calculate(
+                            input,
+                            weightKg
+                        )
+
+                caseViewModel.updateTdmResult(
+                    result
+                )
+
+            } catch (e: Exception) {
+
+                e.printStackTrace()
+            }
         }
     }
 
-    val result = caseViewModel.tdmResult
+    val result =
+        caseViewModel.tdmResult
+
+    // =========================================================
+    // SAVE COMPLETED CALCULATION
+    // =========================================================
+
+    LaunchedEffect(
+        patient,
+        workflow,
+        input,
+        result
+    ) {
+
+        if (
+            patient != null &&
+            workflow != null &&
+            input != null &&
+            result != null
+        ) {
+
+            withContext(
+                Dispatchers.IO
+            ) {
+
+                historyRepository.saveCase(
+                    patient = patient,
+                    workflow = workflow,
+                    input = input,
+                    result = result
+                )
+            }
+        }
+    }
+
+    // =========================================================
+    // SCREEN
+    // =========================================================
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text("Results", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
 
-        if (result != null) {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Elimination Rate (Ke): %.4f /hr".format(result.ke))
-                    Text("Half-life: %.2f hr".format(result.halfLifeHr))
-                    Text("Volume of Distribution (Vd): %.2f L".format(result.vd))
-                    result.clearance?.let { Text("Clearance: %.2f L/hr".format(it)) }
-                    result.aucTau?.let { Text("AUC (interval): %.2f mg·h/L".format(it)) }
-                    result.auc24?.let { Text("AUC (24h): %.2f mg·h/L".format(it)) }
-                    result.expectedCmin?.let { Text("Trough (Cmin): %.2f mg/L".format(it)) }
-                    result.expectedCmax?.let { Text("Peak (Cmax): %.2f mg/L".format(it)) }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+        // =====================================================
+        // HEADER
+        // =====================================================
 
-            ClinicalPlausibilityCard(
-                result = result,
-                input = input,
-                patientInfo = patientInfo
+        AppHeader(
+            navController
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(
+                    rememberScrollState()
+                )
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                )
+        ) {
+
+            // =================================================
+            // PROGRESS
+            // =================================================
+
+            StepProgressBar(
+                steps = TDM_STEPS,
+                currentStepIndex = 5
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                SecondaryAppButton(
-                    text = "Explore Dosing",
-                    modifier = Modifier.weight(1f)
-                ) {
-                    navController.navigate(AppRoutes.EXPLORE_DOSING)
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            // =================================================
+            // TITLE
+            // =================================================
+
+            ScreenTitleRow(
+                icon = Icons.Filled.BarChart,
+                title = "Results"
+            )
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+            if (result != null) {
+
+                // =================================================
+                // CLINICAL PLAUSIBILITY
+                // =================================================
+
+                ClinicalPlausibilityCard(
+                    result = result,
+                    input = input,
+                    patientInfo = patient
+                )
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                // =================================================
+                // PHARMACOKINETIC PARAMETERS
+                // =================================================
+
+                SectionCard {
+
+                    Text(
+                        text = "Pharmacokinetic Parameters",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    ResultRow(
+                        label = "Elimination Rate (Ke)",
+                        value = "%.5f /hr".format(
+                            result.ke
+                        )
+                    )
+
+                    ResultRow(
+                        label = "Half-Life (t½)",
+                        value = "%.2f hours".format(
+                            result.halfLifeHr
+                        )
+                    )
+
+                    ResultRow(
+                        label = "Volume of Distribution",
+                        value = "%.2f L".format(
+                            result.vd
+                        )
+                    )
+
+                    result.clearance?.let {
+
+                        ResultRow(
+                            label = "Clearance",
+                            value = "%.2f L/hr".format(it)
+                        )
+                    }
+
+                    result.aucTau?.let {
+
+                        ResultRow(
+                            label = "AUC Interval",
+                            value = "%.2f mg•h/L".format(it)
+                        )
+                    }
                 }
-                PrimaryAppButton(
-                    text = "View Explanation",
-                    modifier = Modifier.weight(1f)
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                // =================================================
+                // EFFICACY PARAMETERS
+                // =================================================
+
+                SectionCard {
+
+                    Text(
+                        text = "Efficacy Parameters",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    result.auc24?.let {
+
+                        ResultRow(
+                            label = "AUC₂₄",
+                            value = "%.2f mg•h/L".format(it)
+                        )
+                    }
+
+                    result.micMgL?.let {
+
+                        ResultRow(
+                            label = "MIC",
+                            value = "%.2f mg/L".format(it)
+                        )
+                    }
+
+                    result.aucMic?.let {
+
+                        ResultRow(
+                            label = "AUC/MIC",
+                            value = "%.2f".format(it)
+                        )
+                    }
+
+                    result.expectedCmax?.let {
+
+                        ResultRow(
+                            label = "Peak (Cmax)",
+                            value = "%.2f mg/L".format(it)
+                        )
+                    }
+
+                    result.expectedCmin?.let {
+
+                        ResultRow(
+                            label = "Trough (Cmin)",
+                            value = "%.2f mg/L".format(it)
+                        )
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                // =================================================
+                // CONCENTRATION-TIME GRAPH
+                // =================================================
+
+                SectionCard {
+
+                    ConcentrationTimeGraph(
+                        input = input,
+                        result = result,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                // =================================================
+                // CALCULATION QUALITY CHECK
+                // =================================================
+
+                CalculationQualityCheck(
+                    input = input,
+                    result = result,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                // =================================================
+                // DOSING / EXPLANATION
+                // =================================================
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    navController.navigate(AppRoutes.CALCULATION_EXPLANATION)
+
+                    SecondaryAppButton(
+                        text = "Explore Dosing",
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        navController.navigate(
+                            AppRoutes.EXPLORE_DOSING
+                        )
+                    }
+
+                    PrimaryAppButton(
+                        text = "View Explanation",
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        navController.navigate(
+                            AppRoutes.CALCULATION_EXPLANATION
+                        )
+                    }
+                }
+
+            } else {
+
+                // =================================================
+                // NO RESULT
+                // =================================================
+
+                SectionCard {
+
+                    Text(
+                        text = "No calculation result found.",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text = "Please go back and complete the calculation.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
-        } else {
-            Text("No input data found — please go back and complete previous steps.")
+
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
+
+            AppFooter()
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
         }
     }
 }

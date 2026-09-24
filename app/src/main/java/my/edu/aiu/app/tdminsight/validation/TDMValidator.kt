@@ -6,12 +6,19 @@ object TDMValidator {
 
     private const val MIN_DOSE_MG = 100.0
     private const val MAX_DOSE_MG = 3000.0
+
     private const val MIN_INTERVAL_HR = 4.0
     private const val MAX_INTERVAL_HR = 48.0
+
     private const val MIN_LEVEL_CONC = 0.1
     private const val MAX_LEVEL_CONC = 100.0
+
+    private const val MIN_MIC_MG_L = 0.01
+    private const val MAX_MIC_MG_L = 100.0
+
     private const val MIN_TIME_HR = 0.1
     private const val MAX_TIME_HR = 24.0
+
     private const val MIN_INFUSION_DURATION_HR = 0.5
     private const val MAX_INFUSION_DURATION_HR = 4.0
 
@@ -28,9 +35,11 @@ object TDMValidator {
         errors: MutableMap<String, String>,
         key: String
     ): Double? {
+
         val value = text.toDoubleOrNull()
 
         return when {
+
             text.isBlank() -> {
                 errors[key] = "$fieldLabel is required."
                 null
@@ -42,7 +51,8 @@ object TDMValidator {
             }
 
             value < min || value > max -> {
-                errors[key] = "$fieldLabel must be between $min and $max."
+                errors[key] =
+                    "$fieldLabel must be between $min and $max."
                 null
             }
 
@@ -54,7 +64,8 @@ object TDMValidator {
         doseMgText: String,
         intervalHrText: String,
         infusionDurationHrText: String,
-        preLevelText: String
+        preLevelText: String,
+        micMgLText: String
     ): ValidationResult {
 
         val errors = mutableMapOf<String, String>()
@@ -95,25 +106,41 @@ object TDMValidator {
             "preLevelConc"
         )
 
+        val micMgL = parsePositive(
+            micMgLText,
+            "MIC",
+            MIN_MIC_MG_L,
+            MAX_MIC_MG_L,
+            errors,
+            "micMgL"
+        )
+
         val input =
             if (
                 errors.isEmpty() &&
                 doseMg != null &&
                 intervalHr != null &&
                 infusionDurationHr != null &&
-                preLevelConc != null
+                preLevelConc != null &&
+                micMgL != null
             ) {
+
                 TDMInput.Pre(
                     doseMg = doseMg,
                     intervalHr = intervalHr,
                     infusionDurationHr = infusionDurationHr,
-                    preLevelConc = preLevelConc
+                    preLevelConc = preLevelConc,
+                    micMgL = micMgL
                 )
+
             } else {
                 null
             }
 
-        return ValidationResult(input, errors)
+        return ValidationResult(
+            input = input,
+            errors = errors
+        )
     }
 
     fun validatePost(
@@ -121,7 +148,8 @@ object TDMValidator {
         intervalHrText: String,
         infusionDurationHrText: String,
         samplingTimeHrText: String,
-        postLevelText: String
+        postLevelText: String,
+        micMgLText: String
     ): ValidationResult {
 
         val errors = mutableMapOf<String, String>()
@@ -171,7 +199,15 @@ object TDMValidator {
             "postLevelConc"
         )
 
-        // Cross-field check: sampling time must occur before the next dose is due.
+        val micMgL = parsePositive(
+            micMgLText,
+            "MIC",
+            MIN_MIC_MG_L,
+            MAX_MIC_MG_L,
+            errors,
+            "micMgL"
+        )
+
         if (
             samplingTimeHr != null &&
             intervalHr != null &&
@@ -188,20 +224,27 @@ object TDMValidator {
                 intervalHr != null &&
                 infusionDurationHr != null &&
                 samplingTimeHr != null &&
-                postLevelConc != null
+                postLevelConc != null &&
+                micMgL != null
             ) {
+
                 TDMInput.Post(
                     doseMg = doseMg,
                     intervalHr = intervalHr,
                     infusionDurationHr = infusionDurationHr,
                     samplingTimeHr = samplingTimeHr,
-                    postLevelConc = postLevelConc
+                    postLevelConc = postLevelConc,
+                    micMgL = micMgL
                 )
+
             } else {
                 null
             }
 
-        return ValidationResult(input, errors)
+        return ValidationResult(
+            input = input,
+            errors = errors
+        )
     }
 
     fun validatePrePost(
@@ -211,7 +254,8 @@ object TDMValidator {
         infusionToPostGapHrText: String,
         preToPostGapHrText: String,
         preLevelText: String,
-        postLevelText: String
+        postLevelText: String,
+        micMgLText: String
     ): ValidationResult {
 
         val errors = mutableMapOf<String, String>()
@@ -279,7 +323,15 @@ object TDMValidator {
             "postLevelConc"
         )
 
-        // Cross-field check: the two sample times must fit inside a single dosing interval.
+        val micMgL = parsePositive(
+            micMgLText,
+            "MIC",
+            MIN_MIC_MG_L,
+            MAX_MIC_MG_L,
+            errors,
+            "micMgL"
+        )
+
         if (
             preToPostGapHr != null &&
             intervalHr != null &&
@@ -289,7 +341,6 @@ object TDMValidator {
                 "Pre-to-post gap must be less than the dosing interval."
         }
 
-        // Cross-field check: a post-dose (peak) level should be higher than the pre-dose (trough) level.
         if (
             preLevelConc != null &&
             postLevelConc != null &&
@@ -308,8 +359,10 @@ object TDMValidator {
                 infusionToPostGapHr != null &&
                 preToPostGapHr != null &&
                 preLevelConc != null &&
-                postLevelConc != null
+                postLevelConc != null &&
+                micMgL != null
             ) {
+
                 TDMInput.PrePost(
                     doseMg = doseMg,
                     intervalHr = intervalHr,
@@ -317,12 +370,17 @@ object TDMValidator {
                     infusionToPostGapHr = infusionToPostGapHr,
                     preToPostGapHr = preToPostGapHr,
                     preLevelConc = preLevelConc,
-                    postLevelConc = postLevelConc
+                    postLevelConc = postLevelConc,
+                    micMgL = micMgL
                 )
+
             } else {
                 null
             }
 
-        return ValidationResult(input, errors)
+        return ValidationResult(
+            input = input,
+            errors = errors
+        )
     }
 }

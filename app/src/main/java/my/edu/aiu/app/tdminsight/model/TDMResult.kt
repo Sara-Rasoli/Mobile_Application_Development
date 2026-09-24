@@ -7,6 +7,8 @@ data class TDMResult(
     val clearance: Double? = null,
     val aucTau: Double? = null,
     val auc24: Double? = null,
+    val micMgL: Double? = null,
+    val aucMic: Double? = null,
     val expectedCmin: Double? = null,
     val expectedCmax: Double? = null,
     val newSuggestedDoseMg: Double? = null,
